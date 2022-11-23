@@ -1,0 +1,23 @@
+---
+# Node homogenity 
+homogenity: False
+
+# Network topoloy
+topology: diamond
+
+# Data files
+edges_file: data/{topology}_edges.csv
+nodes_file: data/{topology}_nodes.csv
+
+# Options for drawing graph
+graph_options: 
+  arrows: True,
+  arrowstyle: ->,
+  node_shape: o,
+  node_color: none,
+  edgecolors: red,
+  width: 0.75,  # edge color
+  edge_color: gray,
+
+
+

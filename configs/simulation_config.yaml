@@ -1,0 +1,37 @@
+---
+# Max time steps -- total number of iterations
+t_max: 20
+
+# Operation fee for each timestep
+operation_fee: 5 
+
+# The time to repay loan
+# WARNING: must equal to max_payment_delay
+loan_repayment_time: 120 
+
+# Annualised bank loan interest rate 
+bank_annual_rate: 1.03
+
+# Annualised invoice interest rate
+inv_annual_rate: 1.07
+
+# Moving average window width
+window_size: 60 
+
+# Demands generation
+demand_generators:
+    - distribution: normal
+      params: 
+        mean: 50
+        sigma: 10
+    - distribution: poisson
+      parmas: 
+        lambda: 5
+
+# Firm's power (size)
+powers: 
+    - 1 # Small 
+    - 2 # Middle
+    - 3 # Large
+
+
