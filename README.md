@@ -1,2 +1,2 @@
-# autonomous_sc_financing
+# autonomous_scf
 Supply chain financing simulation
