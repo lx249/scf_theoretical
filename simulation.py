@@ -5,6 +5,7 @@ import yaml
 import random
 import time
 
+# Self-defined packages
 from network import SCNetwork
 
 
@@ -120,11 +121,15 @@ for i in range(rows):
         payment_delay_matrix[i, j] = _delay(i + 1, j + 1)
 max_payment_delay = payment_delay_matrix.max()
 
-# Receivable, payable cash, and debt until repayment time
-# `receivables`, `payables`, and `debts` are sliding windows that update over the time step 
-receivables = np.zeros((num_nodes, max_payment_delay))
-payables = np.zeros((num_nodes, max_payment_delay))
-debts = np.zeros((num_nodes, loan_repayment_time))
+
+"""
+Receivable, payable cash, and debts until repayment time
+`receivables`, `payables`, and `debts` are sliding windows 
+that update over the time step.
+"""
+receivables = np.zeros((num_nodes, max_payment_delay+1))
+payables = np.zeros((num_nodes, max_payment_delay+1))
+debts = np.zeros((num_nodes, loan_repayment_time+1))
 
 
 """
@@ -180,12 +185,13 @@ for t in range(1, t_max + 1):
             G.nodes[buyer]["cash"] -= payout
             G.nodes[seller]["cash"] += payout
         # Delay payment
-        else:
+        else: 
             p_b = G.nodes[buyer]["power"]
             p_s = G.nodes[seller]["power"]
             delay = payment_delay_matrix[p_b - 1, p_s - 1]
             payables[buyer][delay] += payout
             receivables[seller][delay] += payout
+           
     
     """
     Action: handle receivables, payables, and debts at current time step. It includes:
@@ -197,16 +203,24 @@ for t in range(1, t_max + 1):
     """
     for node_idx in range(0, num_nodes):
         debt_to_pay = debts[node_idx][0]  # Including interest
-        payout = (receivables[node_idx][0] 
+        payout_today = (receivables[node_idx][0] 
                   - payables[node_idx][0] 
                   - operation_fee 
                   - debt_to_pay)
-        G.nodes[node_idx]["cash"] += payout
+        G.nodes[node_idx]["cash"] += payout_today
+
         # Decrement: the time to receive and pay decrements
-        for d in range(max_payment_delay-1):
+        d = 0 
+        while d <= (max_payment_delay - 1):
             receivables[node_idx][d] = receivables[node_idx][d+1]
             payables[node_idx][d] = payables[node_idx][d+1]
             debts[node_idx][d] = debts[node_idx][d+1]
+            d = d + 1
+        receivables[node_idx][d] = 0
+        payables[node_idx][d] = 0
+        debts[node_idx][d] = 0
+        
+    
         
     """
     Action: Update new orders, adding follow-up replenish orders.
@@ -267,11 +281,14 @@ for t in range(1, t_max + 1):
 
     # Remove bankrupt nodes
     for node in bankrupt_nodes:
-        G.remove(node)
+        print(f"\n*WARNING*: Node {node} is bankrupt! Remove all in and out edges of node {node}.")
+        ebunch = list(G.in_edges(node)) + list(G.out_edges(node))
+        G.remove_edges_from(ebunch)
 
-    # Check if the graph is still connected:
+    # Check if the graph is still connected, i.e., if there is 
+    # a path from dummy market to dummy raw material.
     # If so, proceed; otherwise, break
-    # To-Do: Bugs, fixed it later. 
-    if not nx.is_connected(G):
+    if not nx.has_path(G, network.dummy_raw_material,  network.dummy_market):
+        print("\nNo path from dummy raw material to market!")
         break
 

@@ -1,9 +1,9 @@
 ---
 # Max time steps -- total number of iterations
-t_max: 20
+t_max: 100
 
 # Operation fee for each timestep
-operation_fee: 5 
+operation_fee: 1
 
 # The time to repay loan
 # WARNING: must equal to max_payment_delay
@@ -22,8 +22,8 @@ window_size: 60
 demand_generators:
     - distribution: normal
       params: 
-        mean: 50
-        sigma: 10
+        mean: 5
+        sigma: 2
     - distribution: poisson
       parmas: 
         lambda: 5

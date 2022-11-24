@@ -90,7 +90,7 @@ def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=0.
 
 
 # %% Draw graph
-def _draw_graph(graph, node_pos, options, figsize=(8, 4)):
+def _draw_graph(graph, node_pos, figsize=(8, 4), **options):
     plt.figure(figsize=figsize)
     nx.draw_networkx(graph, pos=node_pos, **options)
 
@@ -148,7 +148,7 @@ class SCNetwork(object):
     def draw(self):
         graph_options = self.config["graph_options"]
         node_pos = _tiered_layout(self.tiers, self.max_tier_width, self.num_tiers)
-        _draw_graph(self.G, node_pos, graph_options)
+        _draw_graph(self.G, node_pos, **graph_options)
 
 
     
