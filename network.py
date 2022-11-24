@@ -127,7 +127,7 @@ class SCNetwork(object):
         nx.set_node_attributes(G, 0, "stock") 
         nx.set_node_attributes(G, 0, "unfilled") 
         nx.set_node_attributes(G, 0, "debt")
-        nx.set_node_attributes(G, False, name="is_backrupted")
+        nx.set_node_attributes(G, False, name="is_backrupt")
 
         dummy_raw_material = 0 # Dummy raw material node has infinite stock
         dummy_market = 19  # Dummy market has infinite cash

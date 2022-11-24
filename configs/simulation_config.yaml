@@ -3,7 +3,7 @@
 t_max: 100
 
 # Operation fee for each timestep
-operation_fee: 1
+operation_fee: 5
 
 # The time to repay loan
 # WARNING: must equal to max_payment_delay
@@ -22,8 +22,8 @@ window_size: 60
 demand_generators:
     - distribution: normal
       params: 
-        mean: 5
-        sigma: 2
+        mean: 50
+        sigma: 10
     - distribution: poisson
       parmas: 
         lambda: 5

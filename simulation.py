@@ -140,6 +140,7 @@ indicates: a `buyer` buy `buy_amount` from `seller`, require replenish or not.
 new_orders = {} 
 total_demands = 0
 
+
 %time
 # %% Iterate over time steps: t1 ... t_max.
 for t in range(1, t_max + 1):
@@ -257,6 +258,9 @@ for t in range(1, t_max + 1):
     bankrupt_nodes = []
     for node_idx in range(0, num_nodes):
         node = G.nodes[node_idx]
+        # Omit backrupt nodes
+        if node["is_bankrupt"]: 
+            continue
         cash_reserve = node["cash"]
         loan = 0
         # If cash is below financing threshold, seek financing, get the loan it can secure
@@ -273,17 +277,17 @@ for t in range(1, t_max + 1):
         G.nodes[node_idx]["cash"] += loan
         G.nodes[node_idx]["debt"] += loan_repayment
 
-        # Check if the node is bankrupt, if so, remove it from the network
+        # Check if the node is bankrupt. 
+        # If so, remove its both in and out edges from the network
         total_receiveable = np.sum(receivables[node_idx, :])
         total_payable = np.sum(payables[node_idx, :])
         if is_bankrupt(cash_reserve + loan, total_receiveable, total_payable):
-            bankrupt_nodes.append(node_idx)
+            print(f"\n*WARNING*: Node {node} is bankrupt!!!")
+            ebunch = list(G.in_edges(node)) + list(G.out_edges(node))
+            G.remove_edges_from(ebunch)
+            G.nodes[node_idx]["is_bankrupt"] = True
+            network.draw()
 
-    # Remove bankrupt nodes
-    for node in bankrupt_nodes:
-        print(f"\n*WARNING*: Node {node} is bankrupt! Remove all in and out edges of node {node}.")
-        ebunch = list(G.in_edges(node)) + list(G.out_edges(node))
-        G.remove_edges_from(ebunch)
 
     # Check if the graph is still connected, i.e., if there is 
     # a path from dummy market to dummy raw material.
@@ -292,3 +296,4 @@ for t in range(1, t_max + 1):
         print("\nNo path from dummy raw material to market!")
         break
 
+# To-Do: deal with bankcrupt nodes
