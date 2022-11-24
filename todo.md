@@ -8,3 +8,21 @@ Columns:
 
 2) Analysis Pipeline:
 N/A
+
+
+# Liming's Update
+## To-Do list:
+- [] Save intermediate data into .csv file
+
+## Output column header: 
+- timestep
+- node_idx
+- tier
+- stock
+- cash
+- receivable
+- payable
+- debt
+- order_from
+- buy_amount
+- unfilled

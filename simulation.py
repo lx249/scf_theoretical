@@ -202,7 +202,7 @@ for t in range(1, t_max + 1):
             4) pay payables; and 
             5) decrement time to receive and pay
     """
-    for node_idx in range(0, num_nodes):
+    for node_idx in range(num_nodes):
         if G.nodes[node_idx]["is_bankrupt"]: 
             continue
         debt_to_pay = debts[node_idx][0]  # Including interest
@@ -258,7 +258,7 @@ for t in range(1, t_max + 1):
                 5) remove it from the network.
     """
     bankrupt_nodes = []
-    for node_idx in range(0, num_nodes):
+    for node_idx in range(num_nodes):
         node = G.nodes[node_idx]
         # Omit backrupt nodes
         if node["is_bankrupt"]: 
@@ -284,8 +284,8 @@ for t in range(1, t_max + 1):
         total_receiveable = np.sum(receivables[node_idx, :])
         total_payable = np.sum(payables[node_idx, :])
         if is_bankrupt(cash_reserve + loan, total_receiveable, total_payable):
-            print(f"\n*WARNING*: Node {node} is bankrupt!!!")
-            ebunch = list(G.in_edges(node)) + list(G.out_edges(node))
+            print(f"\n*WARNING*: Node {node_idx} is bankrupt!!!")
+            ebunch = list(G.in_edges(node_idx)) + list(G.out_edges(node_idx))
             G.remove_edges_from(ebunch)
             G.nodes[node_idx]["is_bankrupt"] = True
             network.draw()
