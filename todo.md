@@ -12,7 +12,9 @@ N/A
 
 # Liming's Update
 ## To-Do list:
-1. Save intermediate data into .csv file
+1. create output.py for handling output related business logics;
+2. create visualisation.py;
+3. batch analysis
 
 The output for each simulation includes two files: outputs_`sim_id`.csv and configs_`sim_id`.yaml
 
