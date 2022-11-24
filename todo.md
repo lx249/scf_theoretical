@@ -12,9 +12,11 @@ N/A
 
 # Liming's Update
 ## To-Do list:
-- [] Save intermediate data into .csv file
+1. Save intermediate data into .csv file
 
-## Output column header: 
+The output for each simulation includes two files: outputs_`sim_id`.csv and configs_`sim_id`.yaml
+
+## column header: 
 - timestep
 - node_idx
 - tier
