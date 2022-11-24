@@ -203,6 +203,8 @@ for t in range(1, t_max + 1):
             5) decrement time to receive and pay
     """
     for node_idx in range(0, num_nodes):
+        if G.nodes[node_idx]["is_bankrupt"]: 
+            continue
         debt_to_pay = debts[node_idx][0]  # Including interest
         payout_today = (receivables[node_idx][0] 
                   - payables[node_idx][0] 
