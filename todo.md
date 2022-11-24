@@ -1,3 +1,4 @@
+# Yaniv's 
 1) Output Data Structure:
 Columns:
 - Simulation_unique_ID
@@ -10,18 +11,22 @@ Columns:
 N/A
 
 
+
+
 # Liming's Update
 ## To-Do list:
 1. create output.py for handling output related business logics;
 2. create visualisation.py;
 3. batch analysis
 
+## Output
 The output for each simulation includes two files: outputs_`sim_id`.csv and configs_`sim_id`.yaml
 
-## column header: 
+### Output column header: 
 - timestep
 - node_idx
 - tier
+- is_bankrupt
 - stock
 - cash
 - receivable
