@@ -9,28 +9,18 @@
 - `tier` = Tier: int. Shortest path from market node
 - Power: int. Power of node.
 - `stock` = Inventory: int. Number of stores material units
-- Unfilled Orders: int. Stored number of orders that node still has to fill.
+- `unfilled` = Unfilled Orders: int. Stored number of orders that node still has to fill.
 - Issued Orders: int. Stored number of orders that node has issued that have not been fulfilled.
-- `is_bankrupt` = Bankrupt: bool. Denotes if a node has become bankrupt and hence removed from the simulation. 
---       I presume the system should be declared broken at the timestep
-- `receivable` = Receivables: not sure, would need to figure out how to aggregate this.
-- `payable` = Payables: not sure, would need to figure out how to aggregate this.
-- `invoice_payables` = Invoice Payables
-- `debt` = Debt: 
-- Nodal Stored Variables (Eg/ cash, inventory, orders, etc.)
-- Simulation Parameters (eg/ mean_demand, invoice_repayment_term, medium_company_sale_skew, etc.)
+- `buy_amount` = New Orders: int. Number of new orders issued by that node at that given timestep.
+- `is_bankrupt` = Bankrupt: bool. Denotes if a node has become bankrupt and hence removed from the simulation.
+- `receivable` = Receivables: float. For now, let us say a sum of the recievables time series?
+- `payable` = Payables: float. For now, let us say a sum of the payables time series?
+a) Note, payables time series should be sum of invoice payables and debt time series
+- `invoice_payables` = Invoice Payables: float. For now, let us say a sum of the invoice payables time series?
+a) note: invoice payable time series should be payables minus debt
+- `debt` = Debt: float. Refers to time series of debt payables, which is the principal debt plus interest. Sum of this produces the debt variable, used to check if the node is above the bank mandate.
 
- `node_idx`,
- `tier`,
-`is_bankrupt`,
- `stock`,
-`cash`,
-`receivable`,
-`payable`,
-`debt`,
-`order_from`,
-`buy_amount`,
-`unfilled`
+- Simulation Parameters (eg/ mean_demand, invoice_repayment_term, medium_company_sale_skew, etc.)
 
 2) Analysis Pipeline:
 N/A
