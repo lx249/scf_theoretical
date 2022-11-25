@@ -15,7 +15,7 @@
 - `is_bankrupt` = Bankrupt: bool. Denotes if a node has become bankrupt and hence removed from the simulation.
 - `receivable` = Receivables: float. For now, let us say a sum of the recievables time series?
 - `payable` = Payables: float. For now, let us say a sum of the payables time series?
-a) Note, payables time series should be sum of invoice payables and debt time series
+a) Note, payables time series should be sum of invoice payables, debt time series, and operation fee
 - `invoice_payables` = Invoice Payables: float. For now, let us say a sum of the invoice payables time series?
 a) note: invoice payable time series should be payables minus debt
 - `debt` = Debt: float. Refers to time series of debt payables, which is the principal debt plus interest. Sum of this produces the debt variable, used to check if the node is above the bank mandate.
