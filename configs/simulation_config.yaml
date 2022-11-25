@@ -1,6 +1,6 @@
 ---
 # Max time steps -- total number of iterations
-t_max: 100
+t_max: 1000
 
 # Operation fee for each timestep
 operation_fee: 5

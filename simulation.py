@@ -1,9 +1,10 @@
 # %%
 import numpy as np
+import pandas as pd
 import networkx as nx
 import yaml
 import random
-import time
+
 
 # Self-defined packages
 from network import SCNetwork
@@ -74,13 +75,41 @@ def interest_to_pay(loan, annual_rate, borrow_period=120):
 
 
 # %% Check if the node is illiuid and expects no profits
-def is_bankrupt(cash_available, total_receiveable, total_payable):
-    return cash_available <= 0 and total_receiveable < total_payable
+def is_bankrupt(cash_available, total_receiveable, total_payable, total_debt):
+    return cash_available <= 0 and total_receiveable < (total_payable + total_debt)
 
 
 # %% Select a financing threshold
 def select_financing_threshold():
     pass
+
+
+# %% 
+def to_output(output, timestep, num_nodes, output_at_t):
+    """
+    Append the output at timestep `t` to output
+
+    `output`: dataframe
+    `timestep`: int
+    `output_at_t`: dict
+         it includes all nodes' runtime data at `timestep`, which includes: 
+        `node_idx`: a list of nodes
+        `tier`, 
+        `is_bankrupt`,
+        `stock`,
+        `cash`,
+        `receivable`,
+        `payable`,
+        `debt`,
+        `order_from`,
+        `buy_amount`,
+        `unfilled`
+    """
+    new_output = {"timestep": [timestep] * num_nodes} 
+    new_output |= output_at_t
+    output = output.append(new_output, ignore_index=True)
+    return output
+
 
 
 # %% Simulation configurations
@@ -128,7 +157,7 @@ Receivable, payable cash, and debts until repayment time
 that update over the time step.
 """
 receivables = np.zeros((num_nodes, max_payment_delay+1))
-payables = np.zeros((num_nodes, max_payment_delay+1))
+payables = np.zeros((num_nodes, max_payment_delay+1)) 
 debts = np.zeros((num_nodes, loan_repayment_time+1))
 
 
@@ -205,23 +234,22 @@ for t in range(1, t_max + 1):
     for node_idx in range(num_nodes):
         if G.nodes[node_idx]["is_bankrupt"]: 
             continue
-        debt_to_pay = debts[node_idx][0]  # Including interest
+        debt_repay_today = debts[node_idx][0]  # Including interest
         payout_today = (receivables[node_idx][0] 
-                  - payables[node_idx][0] 
-                  - operation_fee 
-                  - debt_to_pay)
-        G.nodes[node_idx]["cash"] += payout_today
+                        - payables[node_idx][0] 
+                        - operation_fee)
+        G.nodes[node_idx]["cash"] += (payout_today - debt_repay_today)
 
         # Decrement: the time to receive and pay decrements
-        d = 0 
-        while d <= (max_payment_delay - 1):
+        for d in range(max_payment_delay-1):
             receivables[node_idx][d] = receivables[node_idx][d+1]
             payables[node_idx][d] = payables[node_idx][d+1]
+        for d in range(loan_repayment_time-1):
             debts[node_idx][d] = debts[node_idx][d+1]
-            d = d + 1
-        receivables[node_idx][d] = 0
-        payables[node_idx][d] = 0
-        debts[node_idx][d] = 0
+        receivables[node_idx][max_payment_delay] = 0
+        payables[node_idx][max_payment_delay] = 0
+        debts[node_idx][loan_repayment_time] = 0
+
         
     
         
@@ -274,7 +302,6 @@ for t in range(1, t_max + 1):
 
         interest = interest_to_pay(loan, bank_annual_rate, loan_repayment_time)
         loan_repayment = loan + interest
-        debts[node_idx][loan_repayment_time-1] = loan_repayment
         payables[node_idx][loan_repayment_time-1] += loan_repayment
         G.nodes[node_idx]["cash"] += loan
         G.nodes[node_idx]["debt"] += loan_repayment
@@ -283,7 +310,8 @@ for t in range(1, t_max + 1):
         # If so, remove its both in and out edges from the network
         total_receiveable = np.sum(receivables[node_idx, :])
         total_payable = np.sum(payables[node_idx, :])
-        if is_bankrupt(cash_reserve + loan, total_receiveable, total_payable):
+        total_debt = np.sum(debts[node_idx, :])
+        if is_bankrupt(cash_reserve + loan, total_receiveable, total_payable, total_debt):
             print(f"\n*WARNING*: Node {node_idx} is bankrupt!!!")
             ebunch = list(G.in_edges(node_idx)) + list(G.out_edges(node_idx))
             G.remove_edges_from(ebunch)
@@ -296,6 +324,7 @@ for t in range(1, t_max + 1):
     # If so, proceed; otherwise, break
     if not nx.has_path(G, network.dummy_raw_material,  network.dummy_market):
         print("\nNo path from dummy raw material to market!")
+        print("Network is unconnected, simulation ends.")
         break
 
 # To-Do: deal with bankcrupt nodes
