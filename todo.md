@@ -13,12 +13,12 @@
 - Issued Orders: int. Stored number of orders that node has issued that have not been fulfilled.
 - `buy_amount` = New Orders: int. Number of new orders issued by that node at that given timestep.
 - `is_bankrupt` = Bankrupt: bool. Denotes if a node has become bankrupt and hence removed from the simulation.
-- `receivable` = Receivables: float. For now, let us say a sum of the recievables time series?
-- `payable` = Payables: float. For now, let us say a sum of the payables time series?
-a) Note, payables time series should be sum of invoice payables, debt time series, and operation fee
-- `invoice_payables` = Invoice Payables: float. For now, let us say a sum of the invoice payables time series?
-a) note: invoice payable time series should be payables minus debt
-- `debt` = Debt: float. Refers to time series of debt payables, which is the principal debt plus interest. Sum of this produces the debt variable, used to check if the node is above the bank mandate.
+- `receivable` = Receivables: float. Recievables at timestep t0
+- `payable` = Payables: float. Payables at timestep t0
+a) Note, payables should be invoice payables + debt + operation fee
+- `invoice_payables` = Invoice Payables: float. Invoice payables at time t0
+a) note: invoice payable should be payables - debt
+- `debt` = Debt: float. Debt payables, which is the principal debt plus interest. Sum of this produces the debt variable, used to check if the node is above the bank mandate.
 
 - Simulation Parameters (eg/ mean_demand, invoice_repayment_term, medium_company_sale_skew, etc.)
 
