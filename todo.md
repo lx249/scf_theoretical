@@ -1,6 +1,7 @@
 # Yaniv's 
 1) Output Data Structure:
-Columns:
+
+**Columns:**
 - Simulation_unique_ID
 - Node_ID
 - Tier
