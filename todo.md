@@ -2,7 +2,14 @@
 
 1) Output Data Structure:
 ## File name
-output_simulation_unique_ID.csv
+- output_`sim_unique_ID`.csv
+- config_`sim_unique_ID`.yaml
+
+## Simulation Parameters
+- mean_demand 
+- invoice_repayment_term 
+- medium_company_sale_skew
+
 
 ## Columns
 - `timestep`: int. The timestep this data is recorded at.
@@ -22,8 +29,6 @@ a) Note, payables should be invoice payables + debt + operation fee
 a) note: invoice payable should be payables - debt
 - `debt` = Debt: float. Debt payables, which is the principal debt plus interest. Sum of this produces the debt variable, used to check if the node is above the bank mandate.
 
-## Simulation Parameters
-(eg/ mean_demand, invoice_repayment_term, medium_company_sale_skew, etc.)
 
 2) Analysis Pipeline:
 N/A
