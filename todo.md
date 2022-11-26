@@ -1,8 +1,6 @@
 # Yaniv's 
 
-# Output 
-
-1) Output Data Structure:
+# Output Data Structure:
 ## File name
 - output_`sim_unique_ID`.csv
 - config_`sim_unique_ID`.yaml
