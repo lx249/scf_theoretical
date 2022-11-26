@@ -1,8 +1,10 @@
 # Yaniv's 
+
 1) Output Data Structure:
-** File name **
+## File name
 output_simulation_unique_ID.csv
-** Columns **
+
+## Columns
 - `timestep`: int. The timestep this data is recorded at.
 - `node_idx` = Node ID: int
 - `cash` = Cash: float. Liquid cash of node at present time (t+0). I guess should be possible to define as max(recievables_(t+0)-payables_(t+0),0).
@@ -20,7 +22,7 @@ a) Note, payables should be invoice payables + debt + operation fee
 a) note: invoice payable should be payables - debt
 - `debt` = Debt: float. Debt payables, which is the principal debt plus interest. Sum of this produces the debt variable, used to check if the node is above the bank mandate.
 
-** Simulation Parameters ** 
+## Simulation Parameters
 (eg/ mean_demand, invoice_repayment_term, medium_company_sale_skew, etc.)
 
 2) Analysis Pipeline:
