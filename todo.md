@@ -1,16 +1,16 @@
 # Yaniv's 
 1) Output Data Structure:
-
-**Columns:**
-- Simulation_unique_ID: unsure
-- Timestep: int. The timestep this data is recorded at.
+** File name **
+output_simulation_unique_ID.csv
+** Columns **
+- `timestep`: int. The timestep this data is recorded at.
 - `node_idx` = Node ID: int
 - `cash` = Cash: float. Liquid cash of node at present time (t+0). I guess should be possible to define as max(recievables_(t+0)-payables_(t+0),0).
 - `tier` = Tier: int. Shortest path from market node
-- Power: int. Power of node.
+- `power`: int. Power of node.
 - `stock` = Inventory: int. Number of stores material units
 - `unfilled` = Unfilled Orders: int. Stored number of orders that node still has to fill.
-- Issued Orders: int. Stored number of orders that node has issued that have not been fulfilled.
+- `issued` = Issue orders: int. Stored number of orders that node has issued that have not been fulfilled.
 - `buy_amount` = New Orders: int. Number of new orders issued by that node at that given timestep.
 - `is_bankrupt` = Bankrupt: bool. Denotes if a node has become bankrupt and hence removed from the simulation.
 - `receivable` = Receivables: float. Recievables at timestep t0
@@ -20,7 +20,8 @@ a) Note, payables should be invoice payables + debt + operation fee
 a) note: invoice payable should be payables - debt
 - `debt` = Debt: float. Debt payables, which is the principal debt plus interest. Sum of this produces the debt variable, used to check if the node is above the bank mandate.
 
-- Simulation Parameters (eg/ mean_demand, invoice_repayment_term, medium_company_sale_skew, etc.)
+** Simulation Parameters ** 
+(eg/ mean_demand, invoice_repayment_term, medium_company_sale_skew, etc.)
 
 2) Analysis Pipeline:
 N/A
