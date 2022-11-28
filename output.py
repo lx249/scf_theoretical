@@ -11,6 +11,8 @@ columns = [
     "cash",
     "order_from",
     "buy_amount",
+    "purchase_value", 
+    "sale_value",
     "unfilled", # Unfilled orders
     "issued",  # Issued orders
     "receivable",
@@ -35,7 +37,7 @@ class Writer(object):
             the output data at a time step.
         """
         incoming_output = pd.DataFrame.from_dict(data_at_t)
-        self.output = pd.concat([self.output, incoming_output])
+        self.output = pd.concat([self.output, incoming_output], ignore_index=True)
 
     def write(self):
         self.output.to_csv(self.output_file)

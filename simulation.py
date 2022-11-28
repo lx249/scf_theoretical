@@ -60,6 +60,28 @@ def get_demand(distribution, **params):
         raise ValueError(f"Unrecognised demand generator '{distribution}'!")
 
 
+# %% Get the info of the current order
+def get_current_order(orders, seller):
+    """
+    Parameters
+    ----------
+    orders: dict
+        The incoming orders at this time step.
+
+    Returns
+    -------
+    (order_from, buy_amount): tuple
+        `order_from` places an order with `buy_amount`.
+
+    """
+    curr_order = [(b, v)
+                  for (b, s), (v, _) in orders.items() if s == seller]
+    if not curr_order:
+        return (np.nan, np.nan)
+    else:
+        return curr_order[0]
+
+
 # %% Calculate the cap of available loan
 def get_loan_cap(cash_reserve, power):
     return (power + 1) * cash_reserve
@@ -155,6 +177,11 @@ for t in range(1, t_max + 1):
     total_demands += demand
     print("_"*30)
     print(f"[{t:<8}], demand: {demand}, total_demand: {total_demands}")
+
+    # Save the data at current time step into file.
+    output_at_t = {}
+    for k in columns:
+        output_at_t[k] = []
     
     # New demand from market: randomly select an OEM to fill the demand
     oem = select_seller(G, network.dummy_market)
@@ -201,6 +228,7 @@ for t in range(1, t_max + 1):
             payables[buyer][delay] += payout
             receivables[seller][delay] += payout
 
+
     """
     Action: handle receivables, payables, and debts at current time step. It includes:
             1) pay debt; 
@@ -210,14 +238,46 @@ for t in range(1, t_max + 1):
             5) decrement time to receive and pay
     """
     for node_idx in range(num_nodes):
-        if G.nodes[node_idx]["is_bankrupt"]: 
-            continue
-        payout_today = (receivables[node_idx][0] 
-                        - payables[node_idx][0]
-                        - operation_fee)
-        G.nodes[node_idx]["cash"] += (payout_today)
+        # Exclude bankrupt nodes
+        _bankrupt = G.nodes[node_idx]["is_bankrupt"]
+        if not _bankrupt:
+            payout_today = (receivables[node_idx][0] 
+                            - payables[node_idx][0]
+                            - operation_fee)
+            G.nodes[node_idx]["cash"] += (payout_today)
 
-        # Decrement: the time to receive and pay decrements decrements
+        # Save data into `output_at_t` for output
+        # If bankrupt, leave them blank (`np.nan`)
+        order_from, buy_amount = get_current_order(new_orders, node_idx)
+        _stock = np.nan if _bankrupt else G.nodes[node_idx]["stock"]
+        _cash = np.nan if _bankrupt else G.nodes[node_idx]["cash"]
+        _order_from = np.nan if _bankrupt else order_from
+        _buy_amount = np.nan if _bankrupt else buy_amount
+        _unfilled = np.nan if _bankrupt else G.nodes[node_idx]["unfilled"]
+        _issued = np.nan if _bankrupt else G.nodes[node_idx]["issued"]
+        _received = np.nan if _bankrupt else receivables[node_idx][0]
+        _paid = np.nan if _bankrupt else payables[node_idx][0]
+        _debt = np.nan if _bankrupt else debts[node_idx][0]
+
+        output_at_t["timestep"].append(t)
+        output_at_t["node_idx"].append(node_idx)
+        output_at_t["tier"].append(G.nodes[node_idx]["tier"])
+        output_at_t["power"].append(G.nodes[node_idx]["power"])
+        output_at_t["is_bankrupt"].append(G.nodes[node_idx]["is_bankrupt"])
+        
+        output_at_t["stock"].append(_stock)
+        output_at_t["cash"].append(_cash)
+        output_at_t["order_from"].append(_order_from)
+        output_at_t["buy_amount"].append(_buy_amount)
+        output_at_t["unfilled"].append(_unfilled)
+        output_at_t["issued"].append(_issued)
+        output_at_t["receivable"].append(_received)
+        output_at_t["payable"].append(_paid)
+        output_at_t["debt"].append(_debt)
+
+        # Decrement: the time to receive, to pay, and to repay decrement one time step.
+        # After decrement, their values at current time step should be reset
+        # to ZERO; we delay these actions after getting these values.
         for d in range(max_payment_delay-1):
             receivables[node_idx][d] = receivables[node_idx][d+1]
             payables[node_idx][d] = payables[node_idx][d+1]
@@ -227,49 +287,6 @@ for t in range(1, t_max + 1):
         payables[node_idx][max_payment_delay] = 0
         debts[node_idx][loan_repayment_time] = 0
 
-    """
-    Action: append to output
-    """
-    def get_current_order(new_orders, seller):
-        """
-        Parameters
-        ----------
-
-        Returns
-        -------
-        (order_from, buy_amount): tuple
-        """
-        curr_order = [(b, v)
-                      for (b, s), (v, _) in new_orders.items() if s == seller]
-        if not curr_order: 
-            return (np.nan, np.nan)
-        else:
-            return curr_order[0]
-
-
-    output_at_t = {}  # Output data at current time step.
-    for k in columns: 
-        output_at_t[k] = []
-
-    for node_idx in range(num_nodes):
-        output_at_t["timestep"].append(t)
-        output_at_t["node_idx"].append(t)
-        output_at_t["tier"].append(G.nodes[node_idx]["tier"])
-        output_at_t["power"].append(G.nodes[node_idx]["power"])
-        output_at_t["is_bankrupt"].append(G.nodes[node_idx]["is_bankrupt"])
-        output_at_t["stock"].append(G.nodes[node_idx]["stock"])
-        output_at_t["cash"].append(G.nodes[node_idx]["cash"])
-        (order_from, buy_amount) = get_current_order(new_orders, node_idx)
-        output_at_t["order_from"].append(order_from)
-        output_at_t["buy_amount"].append(buy_amount)
-        output_at_t["unfilled"].append(G.nodes[node_idx]["unfilled"])
-        output_at_t["issued"].append(G.nodes[node_idx]["issued"])
-        output_at_t["receivable"].append(receivables[node_idx][0])
-        output_at_t["payable"].append(payables[node_idx][0])
-        output_at_t["debt"].append(debts[node_idx][0])
-
-    writer.append(output_at_t)
-    print(writer.output)
 
     ### Updating for next timestep ###    
     """
@@ -333,12 +350,17 @@ for t in range(1, t_max + 1):
         total_payable = np.sum(payables[node_idx, :])
         total_debt = np.sum(debts[node_idx, :])
         if is_bankrupt(cash_reserve + loan, total_receiveable, total_payable):
+            # Output: to terminal
             print(f"\n*WARNING*: Node {node_idx} is bankrupt!!!")
+            # Output: to file
+            output_at_t["is_bankrupt"][node_idx] = True
+            G.nodes[node_idx]["is_bankrupt"] = True
             ebunch = list(G.in_edges(node_idx)) + list(G.out_edges(node_idx))
             G.remove_edges_from(ebunch)
-            G.nodes[node_idx]["is_bankrupt"] = True
             network.draw()
-
+    
+    # Write to file
+    writer.append(output_at_t)
 
     # Check if the graph is still connected, i.e., if there is 
     # a path from dummy market to dummy raw material.
