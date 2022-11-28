@@ -31,7 +31,17 @@ a) note: invoice payable should be payables - debt
 
 
 2) Analysis Pipeline:
-N/A
+a) 
+- First preprocess data st it is all numerical
+- `Aggregate`: Find proportion of failures of each company type across all data
+- `Piecewise`: Find mean of proportion of failures of each company type for each combination of parameters
+- Return Pie Charts (other data representations recommendations acceptable)
+- Determine KL divergence from theoretical distributions (Lattice: s:1/3, m:1/3, l:1/3 | Diamond: s:50%, m:39%, l:11% (approx.)) of `aggregate` and `piecewise` distributions
+b)
+- Survival time histograms on lattice for: small companies; medium companies; large companies; companies in networks that have no notion of company size (homogeneous); whole network
+- Suvival time histograms on diamond for: ditto
+- Superimpose curve of best fit (red) and next 5 best fitting curves (greyed out); mean
+- 
 
 
 
