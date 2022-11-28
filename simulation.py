@@ -60,28 +60,6 @@ def get_demand(distribution, **params):
         raise ValueError(f"Unrecognised demand generator '{distribution}'!")
 
 
-# %% Get the info of the current order
-def get_current_order(orders, seller):
-    """
-    Parameters
-    ----------
-    orders: dict
-        The incoming orders at this time step.
-
-    Returns
-    -------
-    (order_from, buy_amount): tuple
-        `order_from` places an order with `buy_amount`.
-
-    """
-    curr_order = [(b, v)
-                  for (b, s), (v, _) in orders.items() if s == seller]
-    if not curr_order:
-        return (np.nan, np.nan)
-    else:
-        return curr_order[0]
-
-
 # %% Calculate the cap of available loan
 def get_loan_cap(cash_reserve, power):
     return (power + 1) * cash_reserve
@@ -160,8 +138,9 @@ debts = np.zeros((num_nodes, loan_repayment_time+1))
 
 """
 A dictionary stores new orders.
-Its item {(buyer, seller): buy_amount, replenish_required} 
-indicates: a `buyer` buy `buy_amount` from `seller`, require replenish or not.
+Its item {(buyer, seller): buy_amount, receive_amount, replenish_required} 
+indicates: a `buyer` buy `buy_amount` from `seller`, 
+received `receive_amount` require replenish or not.
 """
 new_orders = {} 
 total_demands = 0
@@ -180,15 +159,15 @@ for t in range(1, t_max + 1):
 
     # Save the data at current time step into file.
     output_at_t = {}
-    for k in columns:
-        output_at_t[k] = []
-    
+    for col in columns:
+        output_at_t[col] = []
+
     # New demand from market: randomly select an OEM to fill the demand
     oem = select_seller(G, network.dummy_market)
-    new_orders[(network.dummy_market, oem)] = (demand, False)
+    new_orders[(network.dummy_market, oem)] = (demand, 0, False)
 
     # Iterate all incoming orders, updapte stock, receiveables, payables accordingly.
-    for (buyer, seller), (buy_amount, replenish_required) in new_orders.items():
+    for (buyer, seller), (buy_amount, _, replenish_required) in new_orders.items():
         """
         Action: stock balancing without check cash reserve.
                 `buy_amount`: the accumulated amount of its unfilled orders;
@@ -201,7 +180,7 @@ for t in range(1, t_max + 1):
 
         # Label if the order triggers replenishment
         replenish_required = True if stock <= buy_amount else False
-        new_orders[(buyer, seller)] = (buy_amount, replenish_required) 
+        new_orders[(buyer, seller)] = (buy_amount, receive_amount, replenish_required) 
         
         # Update stock, unfilled_orders, issued_orders of both buyer and seller
         G.nodes[buyer]["stock"] += receive_amount
@@ -209,6 +188,7 @@ for t in range(1, t_max + 1):
         G.nodes[buyer]["unfilled"] -= receive_amount
         G.nodes[seller]["unfilled"] += (buy_amount - receive_amount)
         G.nodes[seller]["issued"] += receive_amount
+
         
         """
         Action: update receivables and payables. 
@@ -246,18 +226,13 @@ for t in range(1, t_max + 1):
                             - operation_fee)
             G.nodes[node_idx]["cash"] += (payout_today)
 
-        # Save data into `output_at_t` for output
-        # If bankrupt, leave them blank (`np.nan`)
-        order_from, buy_amount = get_current_order(new_orders, node_idx)
-        _stock = np.nan if _bankrupt else G.nodes[node_idx]["stock"]
-        _cash = np.nan if _bankrupt else G.nodes[node_idx]["cash"]
-        _order_from = np.nan if _bankrupt else order_from
-        _buy_amount = np.nan if _bankrupt else buy_amount
-        _unfilled = np.nan if _bankrupt else G.nodes[node_idx]["unfilled"]
-        _issued = np.nan if _bankrupt else G.nodes[node_idx]["issued"]
-        _received = np.nan if _bankrupt else receivables[node_idx][0]
-        _paid = np.nan if _bankrupt else payables[node_idx][0]
-        _debt = np.nan if _bankrupt else debts[node_idx][0]
+        _stock      = np.nan if _bankrupt else G.nodes[node_idx]["stock"]
+        _cash       = np.nan if _bankrupt else G.nodes[node_idx]["cash"]
+        _unfilled   = np.nan if _bankrupt else G.nodes[node_idx]["unfilled"]
+        _issued     = np.nan if _bankrupt else G.nodes[node_idx]["issued"]
+        _received   = np.nan if _bankrupt else receivables[node_idx][0]
+        _paid       = np.nan if _bankrupt else payables[node_idx][0]
+        _debt       = np.nan if _bankrupt else debts[node_idx][0]
 
         output_at_t["timestep"].append(t)
         output_at_t["node_idx"].append(node_idx)
@@ -267,13 +242,16 @@ for t in range(1, t_max + 1):
         
         output_at_t["stock"].append(_stock)
         output_at_t["cash"].append(_cash)
-        output_at_t["order_from"].append(_order_from)
-        output_at_t["buy_amount"].append(_buy_amount)
+        output_at_t["order_from"].append(np.nan)
+        output_at_t["buy_amount"].append(np.nan)
+        output_at_t["purchase_value"].append(np.nan)
+        output_at_t["sale_value"].append(np.nan)
         output_at_t["unfilled"].append(_unfilled)
         output_at_t["issued"].append(_issued)
         output_at_t["receivable"].append(_received)
         output_at_t["payable"].append(_paid)
         output_at_t["debt"].append(_debt)
+
 
         # Decrement: the time to receive, to pay, and to repay decrement one time step.
         # After decrement, their values at current time step should be reset
@@ -287,19 +265,27 @@ for t in range(1, t_max + 1):
         payables[node_idx][max_payment_delay] = 0
         debts[node_idx][loan_repayment_time] = 0
 
+    # Output: set the values of the remaining four columns
+    for (buyer, seller), (buy_amount, receive_amount, _) in new_orders.items():
+        output_at_t["order_from"][seller] = buyer
+        output_at_t["buy_amount"][seller] = buy_amount
+        _purchase_value = G.nodes[seller]["sell_price"] * receive_amount
+        output_at_t["purchase_value"][buyer] = _purchase_value
+        output_at_t["sale_value"][seller] = _purchase_value
+        
 
     ### Updating for next timestep ###    
     """
     Action: Update new orders, adding follow-up replenish orders.
     """
     replenish_orders = {}
-    for (buyer, seller), (_, replenish_required) in new_orders.items():
+    for (buyer, seller), (_, _, replenish_required) in new_orders.items():
         if replenish_required:
             # Add follow-up replenish order
             new_seller = select_seller(G, seller)
             new_buyer = seller
             buy_amount = G.nodes[new_buyer]["unfilled"]
-            replenish_orders[(new_buyer, new_seller)] = (buy_amount, False)
+            replenish_orders[(new_buyer, new_seller)] = (buy_amount, 0, False)
     new_orders = replenish_orders
 
     """
@@ -371,4 +357,3 @@ for t in range(1, t_max + 1):
         writer.write()
         break
 
-# To-Do: deal with bankcrupt nodes
