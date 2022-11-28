@@ -64,7 +64,6 @@ def _node_power(homogenity, tier_width, min_tier_width=2):
     return int(power // (1 / 3) + 1)
 
 
-
 # %% Calculate node position.
 # The entire drawing area is spanning from bottom left (0, 0) (origin point)
 # to top right (1, 1)
@@ -125,7 +124,8 @@ class SCNetwork(object):
         
         nx.set_node_attributes(G, attrs)
         nx.set_node_attributes(G, 0, "stock") 
-        nx.set_node_attributes(G, 0, "unfilled") 
+        nx.set_node_attributes(G, 0, "unfilled")
+        nx.set_node_attributes(G, 0, "issued")
         nx.set_node_attributes(G, 0, "debt")
         nx.set_node_attributes(G, False, "is_bankrupt")
 

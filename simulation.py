@@ -4,10 +4,12 @@ import pandas as pd
 import networkx as nx
 import yaml
 import random
+import time 
 
 
 # Self-defined packages
 from network import SCNetwork
+from output import columns, Writer
 
 
 # %% Load config parameters
@@ -75,41 +77,13 @@ def interest_to_pay(loan, annual_rate, borrow_period=120):
 
 
 # %% Check if the node is illiuid and expects no profits
-def is_bankrupt(cash_available, total_receiveable, total_payable, total_debt):
-    return cash_available <= 0 and total_receiveable < (total_payable + total_debt)
+def is_bankrupt(cash_available, total_receiveable, total_payable):
+    return cash_available <= 0 and total_receiveable < total_payable
 
 
 # %% Select a financing threshold
 def select_financing_threshold():
     pass
-
-
-# %% 
-def to_output(output, timestep, num_nodes, output_at_t):
-    """
-    Append the output at timestep `t` to output
-
-    `output`: dataframe
-    `timestep`: int
-    `output_at_t`: dict
-         it includes all nodes' runtime data at `timestep`, which includes: 
-        `node_idx`: a list of nodes
-        `tier`, 
-        `is_bankrupt`,
-        `stock`,
-        `cash`,
-        `receivable`,
-        `payable`,
-        `debt`,
-        `order_from`,
-        `buy_amount`,
-        `unfilled`
-    """
-    new_output = {"timestep": [timestep] * num_nodes} 
-    new_output |= output_at_t
-    output = output.append(new_output, ignore_index=True)
-    return output
-
 
 
 # %% Simulation configurations
@@ -155,6 +129,7 @@ max_payment_delay = payment_delay_matrix.max()
 Receivable, payable cash, and debts until repayment time
 `receivables`, `payables`, and `debts` are sliding windows 
 that update over the time step.
+Note: `payables` include the debts. 
 """
 receivables = np.zeros((num_nodes, max_payment_delay+1))
 payables = np.zeros((num_nodes, max_payment_delay+1)) 
@@ -168,6 +143,9 @@ indicates: a `buyer` buy `buy_amount` from `seller`, require replenish or not.
 """
 new_orders = {} 
 total_demands = 0
+
+# Define a writer for storing runtime data.
+writer = Writer(sim_id=0)
 
 
 %time
@@ -198,16 +176,17 @@ for t in range(1, t_max + 1):
         replenish_required = True if stock <= buy_amount else False
         new_orders[(buyer, seller)] = (buy_amount, replenish_required) 
         
-        # Update stock, unfilled_orders of both buyer and seller
+        # Update stock, unfilled_orders, issued_orders of both buyer and seller
         G.nodes[buyer]["stock"] += receive_amount
         G.nodes[seller]["stock"] -= receive_amount
         G.nodes[buyer]["unfilled"] -= receive_amount
         G.nodes[seller]["unfilled"] += (buy_amount - receive_amount)
-
+        G.nodes[seller]["issued"] += receive_amount
+        
         """
         Action: update receivables and payables. 
                 If buyer or seller is dummy node, then payment occurs immediately; 
-                Otherwise, delay payment as much as possible, which is determined by a node's power
+                Otherwise, delay payment as much as possible, which is determined by a node's power.
         """
         payout = receive_amount * G.nodes[seller]["sell_price"]
         # Pay immediately
@@ -221,8 +200,7 @@ for t in range(1, t_max + 1):
             delay = payment_delay_matrix[p_b - 1, p_s - 1]
             payables[buyer][delay] += payout
             receivables[seller][delay] += payout
-           
-    
+
     """
     Action: handle receivables, payables, and debts at current time step. It includes:
             1) pay debt; 
@@ -234,13 +212,12 @@ for t in range(1, t_max + 1):
     for node_idx in range(num_nodes):
         if G.nodes[node_idx]["is_bankrupt"]: 
             continue
-        debt_repay_today = debts[node_idx][0]  # Including interest
         payout_today = (receivables[node_idx][0] 
-                        - payables[node_idx][0] 
+                        - payables[node_idx][0]
                         - operation_fee)
-        G.nodes[node_idx]["cash"] += (payout_today - debt_repay_today)
+        G.nodes[node_idx]["cash"] += (payout_today)
 
-        # Decrement: the time to receive and pay decrements
+        # Decrement: the time to receive and pay decrements decrements
         for d in range(max_payment_delay-1):
             receivables[node_idx][d] = receivables[node_idx][d+1]
             payables[node_idx][d] = payables[node_idx][d+1]
@@ -250,9 +227,51 @@ for t in range(1, t_max + 1):
         payables[node_idx][max_payment_delay] = 0
         debts[node_idx][loan_repayment_time] = 0
 
-        
-    
-        
+    """
+    Action: append to output
+    """
+    def get_current_order(new_orders, seller):
+        """
+        Parameters
+        ----------
+
+        Returns
+        -------
+        (order_from, buy_amount): tuple
+        """
+        curr_order = [(b, v)
+                      for (b, s), (v, _) in new_orders.items() if s == seller]
+        if not curr_order: 
+            return (np.nan, np.nan)
+        else:
+            return curr_order[0]
+
+
+    output_at_t = {}  # Output data at current time step.
+    for k in columns: 
+        output_at_t[k] = []
+
+    for node_idx in range(num_nodes):
+        output_at_t["timestep"].append(t)
+        output_at_t["node_idx"].append(t)
+        output_at_t["tier"].append(G.nodes[node_idx]["tier"])
+        output_at_t["power"].append(G.nodes[node_idx]["power"])
+        output_at_t["is_bankrupt"].append(G.nodes[node_idx]["is_bankrupt"])
+        output_at_t["stock"].append(G.nodes[node_idx]["stock"])
+        output_at_t["cash"].append(G.nodes[node_idx]["cash"])
+        (order_from, buy_amount) = get_current_order(new_orders, node_idx)
+        output_at_t["order_from"].append(order_from)
+        output_at_t["buy_amount"].append(buy_amount)
+        output_at_t["unfilled"].append(G.nodes[node_idx]["unfilled"])
+        output_at_t["issued"].append(G.nodes[node_idx]["issued"])
+        output_at_t["receivable"].append(receivables[node_idx][0])
+        output_at_t["payable"].append(payables[node_idx][0])
+        output_at_t["debt"].append(debts[node_idx][0])
+
+    writer.append(output_at_t)
+    print(writer.output)
+
+    ### Updating for next timestep ###    
     """
     Action: Update new orders, adding follow-up replenish orders.
     """
@@ -299,9 +318,11 @@ for t in range(1, t_max + 1):
             debt = node["debt"]
             loan_cap = get_loan_cap(cash_reserve, power)
             loan = get_loan(cash_reserve, loan_cap, debt)
-
+        
         interest = interest_to_pay(loan, bank_annual_rate, loan_repayment_time)
         loan_repayment = loan + interest
+        debts[node_idx][loan_repayment_time-1] = loan_repayment
+        
         payables[node_idx][loan_repayment_time-1] += loan_repayment
         G.nodes[node_idx]["cash"] += loan
         G.nodes[node_idx]["debt"] += loan_repayment
@@ -311,7 +332,7 @@ for t in range(1, t_max + 1):
         total_receiveable = np.sum(receivables[node_idx, :])
         total_payable = np.sum(payables[node_idx, :])
         total_debt = np.sum(debts[node_idx, :])
-        if is_bankrupt(cash_reserve + loan, total_receiveable, total_payable, total_debt):
+        if is_bankrupt(cash_reserve + loan, total_receiveable, total_payable):
             print(f"\n*WARNING*: Node {node_idx} is bankrupt!!!")
             ebunch = list(G.in_edges(node_idx)) + list(G.out_edges(node_idx))
             G.remove_edges_from(ebunch)
@@ -325,6 +346,7 @@ for t in range(1, t_max + 1):
     if not nx.has_path(G, network.dummy_raw_material,  network.dummy_market):
         print("\nNo path from dummy raw material to market!")
         print("Network is unconnected, simulation ends.")
+        writer.write()
         break
 
 # To-Do: deal with bankcrupt nodes

@@ -1,4 +1,7 @@
 ---
+# Simulation unique ID
+simulation_ID: 0      
+
 # Max time steps -- total number of iterations
 t_max: 1000
 

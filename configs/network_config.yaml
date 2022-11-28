@@ -6,8 +6,8 @@ homogenity: False
 topology: diamond
 
 # Data files
-edges_file: data/{topology}_edges.csv
-nodes_file: data/{topology}_nodes.csv
+edges_file: input_data/{topology}_edges.csv
+nodes_file: input_data/{topology}_nodes.csv
 
 # Options for drawing graph
 graph_options: 
