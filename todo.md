@@ -71,7 +71,7 @@ a) Calculating the cash to cash cycle
 
 
 
-# Liming's Update
+# Liming's
 ## To-Do list:
 1. create output.py for handling output related business logics;
 2. create visualisation.py;
