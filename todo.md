@@ -76,6 +76,8 @@ a) Calculating the cash to cash cycle
 1. create output.py for handling output related business logics;
 2. create visualisation.py;
 3. batch analysis
+4. make material units traverse only one edge per timestep
+5. scale banking mandate to cash at end of previous timestep
 
 ## Output
 The output for each simulation includes two files: outputs_`sim_id`.csv and configs_`sim_id`.yaml
