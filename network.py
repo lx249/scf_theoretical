@@ -92,6 +92,9 @@ def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=0.
 def _draw_graph(graph, node_pos, figsize=(8, 4), **options):
     plt.figure(figsize=figsize)
     nx.draw_networkx(graph, pos=node_pos, **options)
+    nx.draw_networkx(graph, pos=node_pos, 
+                     edge_lebels={(0, 2)): "50"},
+                     font_color="red")
 
 
 # %% Supply chain network

@@ -13,11 +13,10 @@ nodes_file: input_data/{topology}_nodes.csv
 graph_options: 
   arrows: True
   arrowstyle: ->
-  node_shape: o
-  node_color: none
-  edgecolors: red
-  width: 0.75  # edge color
+  node_size: 500
+  node_color: pink
+  width: 0.75  # edge line width
   edge_color: gray
-
+  
 
 

@@ -166,7 +166,8 @@ for t in range(1, t_max + 1):
     oem = select_seller(G, network.dummy_market)
     new_orders[(network.dummy_market, oem)] = (demand, 0, False)
 
-    # Iterate all incoming orders, updapte stock, receiveables, payables accordingly.
+    # Iterate all incoming orders, updapte receiveables, payables immediately, 
+    # but deplay stock update till next time step (material needs one time step delivery).
     for (buyer, seller), (buy_amount, _, replenish_required) in new_orders.items():
         """
         Action: stock balancing without check cash reserve.
@@ -182,13 +183,6 @@ for t in range(1, t_max + 1):
         replenish_required = True if stock <= buy_amount else False
         new_orders[(buyer, seller)] = (buy_amount, receive_amount, replenish_required) 
         
-        # Update stock, unfilled_orders, issued_orders of both buyer and seller
-        G.nodes[buyer]["stock"] += receive_amount
-        G.nodes[seller]["stock"] -= receive_amount
-        G.nodes[buyer]["unfilled"] -= receive_amount
-        G.nodes[seller]["unfilled"] += (buy_amount - receive_amount)
-        G.nodes[seller]["issued"] += receive_amount
-
         
         """
         Action: update receivables and payables. 
@@ -265,16 +259,26 @@ for t in range(1, t_max + 1):
         payables[node_idx][max_payment_delay] = 0
         debts[node_idx][loan_repayment_time] = 0
 
-    # Output: set the values of the remaining four columns
+
+    ### Updating for next timestep ###
+    """
+    Action: Update stock, unfilled_orders, issued_orders of both buyer and seller
+    """
     for (buyer, seller), (buy_amount, receive_amount, _) in new_orders.items():
+        G.nodes[buyer]["stock"] += receive_amount
+        G.nodes[seller]["stock"] -= receive_amount
+        G.nodes[buyer]["unfilled"] -= receive_amount
+        G.nodes[seller]["unfilled"] += (buy_amount - receive_amount)
+        G.nodes[seller]["issued"] += receive_amount
+
+        # Output: set the values of the remaining four columns
         output_at_t["order_from"][seller] = buyer
         output_at_t["buy_amount"][seller] = buy_amount
         _purchase_value = G.nodes[seller]["sell_price"] * receive_amount
         output_at_t["purchase_value"][buyer] = _purchase_value
         output_at_t["sale_value"][seller] = _purchase_value
         
-
-    ### Updating for next timestep ###    
+ 
     """
     Action: Update new orders, adding follow-up replenish orders.
     """
@@ -299,8 +303,8 @@ for t in range(1, t_max + 1):
 
 
     """
-    Action: Seek financing (loan). Check every node if they need bank financing. 
-            If so, then: 
+    Action: Seek bank financing. 
+            Check every node if they need bank financing. If so, then: 
                 1) calculate the amount of loan they can secure;
                 2) secure the loan, and add loan into their cash reserves;
                 3) update payables, this loan plus it interest needs to pay after `bank_repayment_time`;
@@ -350,10 +354,12 @@ for t in range(1, t_max + 1):
 
     # Check if the graph is still connected, i.e., if there is 
     # a path from dummy market to dummy raw material.
-    # If so, proceed; otherwise, break
+    # If so, proceed; otherwise, stop iteration.
     if not nx.has_path(G, network.dummy_raw_material,  network.dummy_market):
         print("\nNo path from dummy raw material to market!")
         print("Network is unconnected, simulation ends.")
         writer.write()
         break
 
+
+# %% Visualisation / animations
