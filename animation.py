@@ -1,5 +1,6 @@
 # %% 
 
+import matplotlib.pyplot as plt
 %matplotlib ipympl
 
 import networkx as nx
@@ -8,41 +9,57 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import random
 
+nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+edges = [(1, 2), (3, 4), (2, 5), (4, 5), (6, 7), (8, 9),
+         (4, 7), (1, 7), (3, 5), (2, 7), (5, 8), (2, 9), (5, 7)]
+G = nx.Graph()
 
-# G = nx.Graph()
-# G.add_nodes_from([1, 2, 3, 4, 5, 6, 7, 8, 9])
-# G.add_edges_from([(1, 2), (3, 4), (2, 5), (4, 5), (6, 7), (8, 9),
-#                  (4, 7), (1, 7), (3, 5), (2, 7), (5, 8), (2, 9), (5, 7)])
+G.add_nodes_from(nodes)
+G.add_edges_from(edges)
+pos = nx.spring_layout(G)
+
+nx.draw(G, pos=pos)
+fig = plt.gcf()
+ax = plt.gca()
 
 # def animate(i):
-#     colors = ["r", "b", "g", "y", "w", "m"]
-#     nx.draw_circular(G, node_color=[random.choice(colors) for j in range(9)])
-
-# nx.draw_circular(G)
-# fig = plt.gcf()
-
-# anim = animation.FuncAnimation(fig, animate, frames=20, interval=20, blit=True)
+#     print(edges[i])
+#     nx.draw_networkx_edges(G, pos=pos, 
+#                             edgelist=[edges[i]], width=3, edge_color="red", alpha=0.5)
 
 
-
-# %% 
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from matplotlib import style
-import networkx as nx
-
-G = nx.DiGraph()
-G.add_edges_from([(1, 2), (1, 3), (2, 3)])
-pos = nx.spring_layout(G)
-arcs = nx.draw(G, pos=pos, edge_color="red", 
-               width=3, alpha=0.5, style="--")
-nx.draw_networkx_edge_labels(G, 
-                            edge_labels={
-                             (1, 2): "E1", 
-                             (1, 3): "E2"}, 
-                             font_color="blue")
-
-# arc.set(linewidth=3, edgecolor="r", linestyle="--", alpha=0.5)
+# anim = animation.FuncAnimation(fig, animate, frames=range(len(edges)), interval=5000, blit=True)
 
 
-# %%
+# class PauseAnimation:
+#     def __init__(self):
+#         fig, ax = plt.subplots()
+#         ax.set_title('Click to pause/resume the animation')
+#         x = np.linspace(-0.1, 0.1, 1000)
+
+#         # Start with a normal distribution
+#         self.n0 = (1.0 / ((4 * np.pi * 2e-4 * 0.1) ** 0.5)
+#                    * np.exp(-x ** 2 / (4 * 2e-4 * 0.1)))
+#         self.p, = ax.plot(x, self.n0)
+
+#         self.animation = animation.FuncAnimation(
+#             fig, self.update, frames=200, interval=50, blit=True)
+#         self.paused = False
+
+#         fig.canvas.mpl_connect('button_press_event', self.toggle_pause)
+
+#     def toggle_pause(self, *args, **kwargs):
+#         if self.paused:
+#             self.animation.resume()
+#         else:
+#             self.animation.pause()
+#         self.paused = not self.paused
+
+#     def update(self, i):
+#         self.n0 += i / 100 % 5
+#         self.p.set_ydata(self.n0 % 20)
+#         return (self.p,)
+
+
+# pa = PauseAnimation()
+# plt.show()

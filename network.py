@@ -67,7 +67,7 @@ def _node_power(homogenity, tier_width, min_tier_width=2):
 # %% Calculate node position.
 # The entire drawing area is spanning from bottom left (0, 0) (origin point)
 # to top right (1, 1)
-def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=0.1):
+def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.15, padding_y=0.15):
     left_x, right_x = padding_x, 1 - padding_x
     bottom_y, top_y = padding_y, 1 - padding_y
     canvas_width, canvas_length = right_x - left_x, top_y - bottom_y
@@ -88,13 +88,11 @@ def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=0.
     return node_pos
 
 
-# %% Draw graph
+# %% Draw graph and return current figure and axes
 def _draw_graph(graph, node_pos, figsize=(8, 4), **options):
     plt.figure(figsize=figsize)
     nx.draw_networkx(graph, pos=node_pos, **options)
-    nx.draw_networkx(graph, pos=node_pos, 
-                     edge_lebels={(0, 2)): "50"},
-                     font_color="red")
+    return (plt.gcf(), plt.gca())
 
 
 # %% Supply chain network
@@ -151,7 +149,9 @@ class SCNetwork(object):
     def draw(self):
         graph_options = self.config["graph_options"]
         node_pos = _tiered_layout(self.tiers, self.max_tier_width, self.num_tiers)
-        _draw_graph(self.G, node_pos, **graph_options)
+        fig, ax = _draw_graph(self.G, node_pos, **graph_options)
+        ax.set_title("Supply Chain Financing Simulation")
+        return fig, ax
 
 
     
