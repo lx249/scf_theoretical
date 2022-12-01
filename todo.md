@@ -79,6 +79,8 @@ a) Calculating the cash to cash cycle
 4. make material units traverse only one edge per timestep
 5. scale banking mandate to cash at end of previous timestep
 
+- let max debt be defined as the last action of every timestep
+
 ## Output
 The output for each simulation includes two files: outputs_`sim_id`.csv and configs_`sim_id`.yaml
 
