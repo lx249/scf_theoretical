@@ -150,7 +150,7 @@ class SCNetwork(object):
         graph_options = self.config["graph_options"]
         node_pos = _tiered_layout(self.tiers, self.max_tier_width, self.num_tiers)
         fig, ax = _draw_graph(self.G, node_pos, **graph_options)
-        ax.set_title("Supply Chain Financing Simulation")
+        # ax.set_title("Supply Chain Financing Simulation")
         return fig, ax
 
 
