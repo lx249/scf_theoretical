@@ -73,11 +73,11 @@ a) Calculating the cash to cash cycle
 
 # Liming's
 ## To-Do list:
-1. create output.py for handling output related business logics;
-2. create visualisation.py;
-3. batch analysis
-4. make material units traverse only one edge per timestep
-5. scale banking mandate to cash at end of previous timestep
+1. create output.py for handling output related business logics []
+2. create visualisation.py []
+3. batch analysis []
+4. make material units traverse only one edge per timestep []
+5. <mark>define banking mandate as final action of any timestep such that it necessarily scales to non-negative cash </mark> []
 
 - let max debt be defined as the last action of every timestep
 
