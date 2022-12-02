@@ -9,14 +9,26 @@ topology: diamond
 edges_file: input_data/{topology}_edges.csv
 nodes_file: input_data/{topology}_nodes.csv
 
-# Options for drawing graph
+# Dawing options for graph
 graph_options: 
   arrows: True
   arrowstyle: ->
   node_size: 500
-  node_color: pink
-  width: 0.75  # edge line width
-  edge_color: gray
+  edgecolors: gray
+  node_color: snow
+  font_color: red
+  width: 0.75 
+  edge_color: darkgray
   
+
+# Drawing options for adding edges
+edge_options:
+  arrowstyle: simple, head_length=0.75, head_width=0.75, tail_width=0.2
+  edge_color: blue
+
+
+# Edge label options
+edge_label_options:
+  font_color: blue
 
 

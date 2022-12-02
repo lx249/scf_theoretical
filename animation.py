@@ -1,68 +1,92 @@
 # %% 
-
-import matplotlib.pyplot as plt
-%matplotlib ipympl
-
+from network import SCNetwork
 import networkx as nx
 import numpy as np
+import pandas as pd 
 import matplotlib.pyplot as plt 
 import matplotlib.animation as animation
 import random
 
 
-class PauseAnimation:
-    def __init__(self):
-        fig, ax = plt.subplots()
-        ax.set_title('Click to pause/resume the animation')
-        x = np.linspace(-0.1, 0.1, 1000)
+def get_data_at_t(data, timestep):
+    """
+    Get data at the given time step.
+    """
+    return data[data.timestep == timestep]
 
-        # Start with a normal distribution
-        self.n0 = (1.0 / ((4 * np.pi * 2e-4 * 0.1) ** 0.5)
-                   * np.exp(-x ** 2 / (4 * 2e-4 * 0.1)))
-        self.p, = ax.plot(x, self.n0)
 
-        self.animation = animation.FuncAnimation(
-            fig, self.update, frames=200, interval=50, blit=True)
-        self.paused = False
+def get_orders(data):
+    # Select the rows in which nodes has incoming orders
+    rows_w_order = data[~data["order_from"].isna()]
+    orders = {}
+    for i, row in rows_w_order.iterrows():
+        buyer, seller = row["order_from"], row["node_idx"]
+        orders[(buyer, seller)] = row["buy_amount"]
+    return orders
 
-        fig.canvas.mpl_connect('button_press_event', self.toggle_pause)
 
-    def toggle_pause(self, *args, **kwargs):
-        if self.paused:
-            self.animation.resume()
+def update(ts, data, network, ax):
+    ax.clear()
+
+    # Data for updating
+    data_at_t = get_data_at_t(data, ts)
+    orders = get_orders(data_at_t)
+
+    graph_options = network.config["graph_options"]
+    edge_options = network.config["edge_options"]
+    edge_label_options = network.config["edge_label_options"]
+
+    G, layout = network.G, network.node_pos
+
+    nx.draw_networkx(G, layout, **graph_options)
+    nx.draw_networkx_edges(G, layout, edgelist=list(orders.keys()), **edge_options)
+    nx.draw_networkx_edge_labels(G, layout, edge_labels=orders, **edge_label_options)
+    ax.set_title(f"Time step {ts}")
+
+
+def animate():
+    # Data preparation
+    data_file = "output_data/output__sim_0.csv"
+    data = pd.read_csv(data_file)
+
+    max_timestep = data.timestep.max()
+
+    network = SCNetwork(config_file="configs/network_config.yaml")
+    fig, ax = network.draw()
+
+    # Remove frames 
+    for pos in ["top", "left", "bottom", "right"]:
+        ax.spines[pos].set_visible(False)
+
+    anim = animation.FuncAnimation(fig, update, 
+                                   frames=range(1, max_timestep+1), 
+                                   interval=500, 
+                                   fargs=(data, network, ax))
+    # Toggle animation
+    paused = False
+    def toggle_pause(e):
+        nonlocal paused 
+        if paused:
+            anim.resume()
         else:
-            self.animation.pause()
-        self.paused = not self.paused
+            anim.pause()
+        paused = not paused
 
-    def update(self, i):
-        self.n0 += i / 100 % 5
-        self.p.set_ydata(self.n0 % 20)
-        return (self.p,)
+    fig.canvas.mpl_connect('button_press_event', toggle_pause)
+
+    # Save animation to a `.gif`
+    anim.save('sim_animation.gif', writer='imagemagick')
+
+    plt.show()
 
 
-pa = PauseAnimation()
-plt.show()
+%matplotlib ipympl
+if __name__ == "__main__":
 
-# %% Animate the simulation.
-class SimulationAnimation(object):
-
-    def __init__(self, network, frames, interval=50, blit=True):
-        fig, ax = network.draw()
-        ax.set_title("Supply Chain Financing Simulation")
-        self.animation = animation.FuncAnimation(
-            fig, self.update, frames=frames, interval=50, blit=True)
-        self.paused = False
-        fig.canvas.mpl_connect('button_press_event', self.toggle_pause)
+    animate()
     
 
-    def toggle_pause(self. *args, **kwargs):
-        if self.paused:
-            self.animation.resume()
-        else:
-            self.animation.pause()
-        self.paused = not self.paused
-        self
     
 
-    def update(self, frame):
-        pass
+
+

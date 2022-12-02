@@ -40,7 +40,7 @@ class Writer(object):
         self.output = pd.concat([self.output, incoming_output], ignore_index=True)
 
     def write(self):
-        self.output.to_csv(self.output_file)
+        self.output.to_csv(self.output_file, index=False)
         
     
         
