@@ -15,10 +15,15 @@ graph_options:
   arrowstyle: ->
   node_size: 500
   edgecolors: gray
-  node_color: snow
-  font_color: red
+  font_color: black
   width: 0.75 
+  alpha: 0.75
   edge_color: darkgray
+
+node_colors:
+  market: red
+  other: snow
+  raw_material: blue
   
 
 # Drawing options for adding edges

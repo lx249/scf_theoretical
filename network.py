@@ -74,7 +74,7 @@ def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=0.
 
     # Horizontally position nodes from right to left tier by tier
     # Vertically position nodes in central area with even interval
-    node_pos = {}
+    layout = {}
     y_intv = canvas_width / (max_tier_width - 1)
     linspace_x = np.linspace(left_x, right_x, num_tiers)
     for tier_idx, v in tiers.items():
@@ -84,14 +84,17 @@ def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=0.
         for idx, v in enumerate(nodes):
             x_pos = linspace_x[num_tiers - tier_idx - 1]
             y_pos = base_y - idx * y_intv
-            node_pos[v] = (x_pos, y_pos)
-    return node_pos
+            layout[v] = (x_pos, y_pos)
+    return layout
 
 
 # %% Draw graph and return current figure and axes
-def _draw_graph(graph, node_pos, figsize=(10, 4), **options):
+def _draw_graph(graph, layout, node_colors, figsize=(10, 4), **options):
     plt.figure(figsize=figsize, frameon=False)
-    nx.draw_networkx(graph, pos=node_pos, **options)
+    node_color = ([node_colors["raw_material"]] 
+                + [node_colors["other"]] * (graph.number_of_nodes() - 2) 
+                + [node_colors["market"]])
+    nx.draw_networkx(graph, pos=layout, node_color=node_color, **options)
     return (plt.gcf(), plt.gca())
 
 
@@ -144,13 +147,13 @@ class SCNetwork(object):
         self.tiers = tiers
         self.num_tiers = num_tiers
         self.max_tier_width = max_tier_width
-        self.node_pos = _tiered_layout(self.tiers, self.max_tier_width, self.num_tiers)
+        self.layout = _tiered_layout(self.tiers, self.max_tier_width, self.num_tiers)
 
     
     def draw(self):
         graph_options = self.config["graph_options"]
-        fig, ax = _draw_graph(self.G, self.node_pos, **graph_options)
-        # ax.set_title("Supply Chain Financing Simulation")
+        node_colors = self.config["node_colors"]
+        fig, ax = _draw_graph(self.G, self.layout, node_colors, **graph_options)
         return fig, ax
 
 

@@ -32,13 +32,18 @@ def update(ts, data, network, ax):
     data_at_t = get_data_at_t(data, ts)
     orders = get_orders(data_at_t)
 
+    # Styling
     graph_options = network.config["graph_options"]
+    node_colors = network.config["node_colors"]
     edge_options = network.config["edge_options"]
     edge_label_options = network.config["edge_label_options"]
+    node_color = ([node_colors["raw_material"]]
+                  + [node_colors["other"]] * (network.G.number_of_nodes() - 2)
+                  + [node_colors["market"]])
 
-    G, layout = network.G, network.node_pos
+    G, layout = network.G, network.layout
 
-    nx.draw_networkx(G, layout, **graph_options)
+    nx.draw_networkx(G, layout, node_color=node_color, **graph_options)
     nx.draw_networkx_edges(G, layout, edgelist=list(orders.keys()), **edge_options)
     nx.draw_networkx_edge_labels(G, layout, edge_labels=orders, **edge_label_options)
     ax.set_title(f"Time step {ts}")
