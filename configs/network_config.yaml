@@ -20,10 +20,16 @@ graph_options:
   alpha: 0.75
   edge_color: darkgray
 
-node_colors:
-  market: red
-  other: snow
-  raw_material: blue
+node_options:
+  market:
+    color: red
+    label: market
+  other:
+    color: snow 
+    label: null
+  raw_material: 
+    color: blue
+    label: raw material
   
 
 # Drawing options for adding edges

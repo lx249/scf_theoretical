@@ -1,11 +1,12 @@
 # %% 
-from network import SCNetwork
 import networkx as nx
 import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt 
 import matplotlib.animation as animation
 import random
+
+from network import SCNetwork
 
 
 def get_data_at_t(data, timestep):
@@ -21,32 +22,36 @@ def get_orders(data):
     orders = {}
     for i, row in rows_w_order.iterrows():
         buyer, seller = row["order_from"], row["node_idx"]
-        orders[(buyer, seller)] = row["buy_amount"]
+        orders[(buyer, seller)] = int(row["buy_amount"])
     return orders
+
+
+# Return the list of bankrupt nodes
+def get_bankrupt_nodes(data):
+    bankrupt_nodes = data.loc[data.is_bankrupt == True, ["node_idx"]]
+    return list(bankrupt_nodes["node_idx"])
 
 
 def update(ts, data, network, ax):
     ax.clear()
 
-    # Data for updating
+    # Incoming orders at current time step
     data_at_t = get_data_at_t(data, ts)
     orders = get_orders(data_at_t)
+    bankrupt_nodes = get_bankrupt_nodes(data_at_t)
 
     # Styling
     graph_options = network.config["graph_options"]
-    node_colors = network.config["node_colors"]
     edge_options = network.config["edge_options"]
     edge_label_options = network.config["edge_label_options"]
-    node_color = ([node_colors["raw_material"]]
-                  + [node_colors["other"]] * (network.G.number_of_nodes() - 2)
-                  + [node_colors["market"]])
 
     G, layout = network.G, network.layout
+    node_colors, node_labels = network.node_colors, network.node_labels
 
-    nx.draw_networkx(G, layout, node_color=node_color, **graph_options)
+    ax.set_title(f"Time step {ts}")
+    nx.draw_networkx(G, layout, node_color=node_colors, labels=node_labels, **graph_options)
     nx.draw_networkx_edges(G, layout, edgelist=list(orders.keys()), **edge_options)
     nx.draw_networkx_edge_labels(G, layout, edge_labels=orders, **edge_label_options)
-    ax.set_title(f"Time step {ts}")
 
 
 def animate():

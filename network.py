@@ -88,13 +88,32 @@ def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=0.
     return layout
 
 
+# %% Get the node labels
+def _get_node_labels(graph, node_options):
+    labels = {}
+    for node_idx in range(graph.number_of_nodes()):
+        labels[node_idx] = str(node_idx) 
+    labels[0] = node_options["raw_material"]["label"]
+    labels[19] = node_options["market"]["label"]
+    return labels
+
+
+# %% Get the node colors 
+def _get_node_colors(graph, node_options):
+    other_color = node_options["other"]["color"]
+    colors = [other_color] * graph.number_of_nodes()
+    colors[0] = node_options["raw_material"]["color"]
+    colors[19] = node_options["market"]["color"]
+    return colors
+
+
 # %% Draw graph and return current figure and axes
-def _draw_graph(graph, layout, node_colors, figsize=(10, 4), **options):
+def _draw_graph(graph, layout, node_colors, node_labels, figsize=(10, 4), **options):
     plt.figure(figsize=figsize, frameon=False)
-    node_color = ([node_colors["raw_material"]] 
-                + [node_colors["other"]] * (graph.number_of_nodes() - 2) 
-                + [node_colors["market"]])
-    nx.draw_networkx(graph, pos=layout, node_color=node_color, **options)
+    nx.draw_networkx(graph, pos=layout, 
+                     labels=node_labels, 
+                     node_color=node_colors, 
+                     **options)
     return (plt.gcf(), plt.gca())
 
 
@@ -113,6 +132,8 @@ class SCNetwork(object):
         G = _create_graph(edges_df)
         node_depths, tiers = _calc_tiers(G)
         max_tier_width, num_tiers = _shape_of_tiers(tiers)
+        node_colors = _get_node_colors(G, config["node_options"])
+        node_labels = _get_node_labels(G, config["node_options"])
 
         attrs = {}  
         for _, row in nodes_df.iterrows():
@@ -148,12 +169,16 @@ class SCNetwork(object):
         self.num_tiers = num_tiers
         self.max_tier_width = max_tier_width
         self.layout = _tiered_layout(self.tiers, self.max_tier_width, self.num_tiers)
-
+        self.node_colors = node_colors
+        self.node_labels = node_labels
     
+
     def draw(self):
         graph_options = self.config["graph_options"]
-        node_colors = self.config["node_colors"]
-        fig, ax = _draw_graph(self.G, self.layout, node_colors, **graph_options)
+        node_options = self.config["node_options"]
+        fig, ax = _draw_graph(self.G, self.layout, 
+                              self.node_colors, self.node_labels, 
+                              **graph_options)
         return fig, ax
 
 
