@@ -22,7 +22,7 @@ graph_options:
 
 node_options:
   market:
-    color: red
+    color: green
     label: market
   other:
     color: snow 

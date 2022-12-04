@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt 
 import matplotlib.animation as animation
-import random
 
 from network import SCNetwork
 
@@ -35,20 +34,26 @@ def get_bankrupt_nodes(data):
 def update(ts, data, network, ax):
     ax.clear()
 
-    # Incoming orders at current time step
+    G, layout = network.G, network.layout
+    node_colors, node_labels = network.node_colors, network.node_labels
+
+    # Update at current time step
     data_at_t = get_data_at_t(data, ts)
     orders = get_orders(data_at_t)
     bankrupt_nodes = get_bankrupt_nodes(data_at_t)
+    for node_idx in bankrupt_nodes:
+        node_colors[node_idx] = "red"
+        ebunch = list(G.in_edges(node_idx)) + list(G.out_edges(node_idx))
+        G.remove_edges_from(ebunch)
 
     # Styling
     graph_options = network.config["graph_options"]
     edge_options = network.config["edge_options"]
     edge_label_options = network.config["edge_label_options"]
 
-    G, layout = network.G, network.layout
-    node_colors, node_labels = network.node_colors, network.node_labels
-
-    ax.set_title(f"Time step {ts}")
+    # Plotting
+    add_info = "" if not bankrupt_nodes else f": node(s) {', '.join(map(str, bankrupt_nodes))} bankrupted"
+    ax.set_title(f"[Time step {ts}] {add_info}")
     nx.draw_networkx(G, layout, node_color=node_colors, labels=node_labels, **graph_options)
     nx.draw_networkx_edges(G, layout, edgelist=list(orders.keys()), **edge_options)
     nx.draw_networkx_edge_labels(G, layout, edge_labels=orders, **edge_label_options)
@@ -85,7 +90,9 @@ def animate():
     fig.canvas.mpl_connect('button_press_event', toggle_pause)
 
     # Save animation to a `.gif`
-    anim.save('sim_animation.gif', writer='imagemagick')
+    # anim.save('sim_animation.gif', writer='imagemagick')
+    writer = animation.FFMpegWriter(fps=2)
+    anim.save("sim_animation.mp4", writer=writer)
 
     plt.show()
 
