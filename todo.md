@@ -34,7 +34,7 @@ a) note: invoice payable should be payables - debt
 - `debt` = Debt: float. Debt payables, which is the principal debt plus interest. Sum of this produces the debt variable, used to check if the node is above the bank mandate.
 
 
-2) Analysis Pipeline:
+## Analysis Pipeline:
 A) Previous Paper Analysis
 
 a) 
@@ -65,7 +65,7 @@ d)
 
 B) Next paper analysis
 a) Calculating the cash to cash cycle
-- Current cash-to-cash cycle variable = sale_price_per_unit\*<stock_over_time_t> / ( sum(purchase_costs_over_time_t) + operational_fee\*t ) * t + <accounts_payable_over_time_t> / sum(sale_values_over_time_t) * t - sum(accounts_payable_over_time_t) / ( sum(purchase_costs_over_time_t) + operational_fee\*t ) * t
+- Current cash-to-cash cycle variable = sale_price_per_unit \*<stock_over_time_t> / ( sum(purchase_costs_over_time_t) + operational_fee\*t ) * t + <accounts_payable_over_time_t> / sum(sale_values_over_time_t) * t - sum(accounts_payable_over_time_t) / ( sum(purchase_costs_over_time_t) + operational_fee\*t ) * t
 - <x> means mean of the set x
 - I believe the first two terms can be simplified into sums (rather than means) not multiplied by the number of timesteps investigated but whatever
 
