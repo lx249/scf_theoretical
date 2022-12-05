@@ -132,6 +132,7 @@ class SCNetwork(object):
         G = _create_graph(edges_df)
         node_depths, tiers = _calc_tiers(G)
         max_tier_width, num_tiers = _shape_of_tiers(tiers)
+        layout = _tiered_layout(tiers, max_tier_width, num_tiers)
         node_colors = _get_node_colors(G, config["node_options"])
         node_labels = _get_node_labels(G, config["node_options"])
 
@@ -168,7 +169,7 @@ class SCNetwork(object):
         self.tiers = tiers
         self.num_tiers = num_tiers
         self.max_tier_width = max_tier_width
-        self.layout = _tiered_layout(self.tiers, self.max_tier_width, self.num_tiers)
+        self.layout = layout
         self.node_colors = node_colors
         self.node_labels = node_labels
     
@@ -176,8 +177,10 @@ class SCNetwork(object):
     def draw(self):
         graph_options = self.config["graph_options"]
         node_options = self.config["node_options"]
-        fig, ax = _draw_graph(self.G, self.layout, 
-                              self.node_colors, self.node_labels, 
+        fig, ax = _draw_graph(self.G, 
+                              self.layout, 
+                              self.node_colors, 
+                              self.node_labels, 
                               **graph_options)
         return fig, ax
 

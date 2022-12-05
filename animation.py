@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt 
 import matplotlib.animation as animation
+from functools import partial
 
 from network import SCNetwork
 
@@ -34,8 +35,10 @@ def get_bankrupt_nodes(data):
 def update(ts, data, network, ax):
     ax.clear()
 
-    G, layout = network.G, network.layout
-    node_colors, node_labels = network.node_colors, network.node_labels
+    G = network.G.copy()
+    layout = network.layout.copy()
+    node_colors = network.node_colors.copy()
+    node_labels = network.node_labels.copy()
 
     # Update at current time step
     data_at_t = get_data_at_t(data, ts)
@@ -53,7 +56,7 @@ def update(ts, data, network, ax):
 
     # Plotting
     add_info = "" if not bankrupt_nodes else f": node(s) {', '.join(map(str, bankrupt_nodes))} bankrupted"
-    ax.set_title(f"[Time step {ts}] {add_info}")
+    ax.set_title(f"Time step [{ts}] {add_info}")
     nx.draw_networkx(G, layout, node_color=node_colors, labels=node_labels, **graph_options)
     nx.draw_networkx_edges(G, layout, edgelist=list(orders.keys()), **edge_options)
     nx.draw_networkx_edge_labels(G, layout, edge_labels=orders, **edge_label_options)
@@ -73,10 +76,12 @@ def animate():
     for pos in ["top", "left", "bottom", "right"]:
         ax.spines[pos].set_visible(False)
 
-    anim = animation.FuncAnimation(fig, update, 
+    anim = animation.FuncAnimation(fig, 
+                                   update, 
                                    frames=range(1, max_timestep+1), 
                                    interval=500, 
                                    fargs=(data, network, ax))
+
     # Toggle animation
     paused = False
     def toggle_pause(e):
