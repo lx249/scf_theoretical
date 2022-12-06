@@ -16,6 +16,7 @@ column_dtypes = [
     ("sale_value", float),
     ("unfilled", int),  # Unfilled orders
     ("issued", int),  # Issued orders
+    ("b_loan", float), # Loan from bank financing
     ("receivable", float),
     ("payable", float),
     ("debt", float)

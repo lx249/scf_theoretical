@@ -226,7 +226,6 @@ for t in range(1, t_max + 1):
                 the seller's stock.
         """
         stock = G.nodes[seller]["stock"]
-        print(" #", buyer, seller)
         receive_amount = min(stock, buy_amount)
         print(f"  ({buyer:>2}->{seller:>2}): buy {buy_amount}, receive {receive_amount}")
 
@@ -278,6 +277,7 @@ for t in range(1, t_max + 1):
         _received   = np.nan if _bankrupt else receivables[node_idx][0]
         _paid       = np.nan if _bankrupt else payables[node_idx][0]
         _debt       = np.nan if _bankrupt else debts[node_idx][0]
+        _b_loan     = np.nan if _bankrupt else 0
 
         output_at_t["timestep"].append(t)
         output_at_t["node_idx"].append(node_idx)
@@ -293,6 +293,7 @@ for t in range(1, t_max + 1):
         output_at_t["sale_value"].append(np.nan)
         output_at_t["unfilled"].append(_unfilled)
         output_at_t["issued"].append(_issued)
+        output_at_t["b_loan"].append(_b_loan)
         output_at_t["receivable"].append(_received)
         output_at_t["payable"].append(_paid)
         output_at_t["debt"].append(_debt)
@@ -331,7 +332,6 @@ for t in range(1, t_max + 1):
                 4) check if the node is still bankrupt after financing, if so, 
                 5) remove it from the network.
     """
-    bankrupt_nodes = []
     for node_idx in range(num_nodes):
         node = G.nodes[node_idx]
         # Omit backrupt nodes
@@ -351,6 +351,7 @@ for t in range(1, t_max + 1):
             power = node["power"]
             loan = get_loan_new(cash_reserve, loan_cap, debt, financing_threshold)
         
+        output_at_t["b_loan"][node_idx] = loan
         interest = interest_to_pay(loan, bank_annual_rate, loan_repayment_time)
         loan_repayment = loan + interest
         debts[node_idx][loan_repayment_time-1] = loan_repayment
@@ -400,7 +401,7 @@ for t in range(1, t_max + 1):
     """
     replenish_orders = {}
     for (buyer, seller), (_, _, replenish_required) in new_orders.items():
-        if replenish_required and buyer not in bankrupt_nodes:
+        if replenish_required and not G.nodes[seller]["is_bankrupt"]:
             # Add follow-up replenish order
             new_seller = select_seller(G, seller)
             new_buyer = seller
