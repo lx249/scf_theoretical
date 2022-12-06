@@ -4,8 +4,6 @@ import pandas as pd
 import networkx as nx
 import yaml
 import random
-import time 
-
 
 # Self-defined packages
 from network import SCNetwork
@@ -61,19 +59,71 @@ def get_demand(distribution, **params):
 
 
 # %% Calculate the cap of available loan
-def get_loan_cap(cash_reserve, power):
-    return (power + 1) * cash_reserve
+def get_loan_cap(cash, power):
+    """
+    Calculate the amount financing available, i.e., banking mandate limit.
+    The minimum loan cap is 0 as negative loan cap is unreasonable.
+
+    Parameters
+    ----------
+    `cash`: float
+        The cash at current timestep.
+    `power`: int 
+        The power of the node. 
+    """
+    return max(cash * (power + 1), 0)
 
 
 # %% Bank financing: return the amount of loan approaved
-def get_loan(cash_reserve, loan_cap, debt):
-    allowed_loan = min(abs(cash_reserve), loan_cap - debt - abs(cash_reserve))
+# Implementation 1: paper 
+def get_loan(cash, lc, debt): 
+    """
+    Calculate the amount of loan a company is allowed to get.
+
+    Parameters
+    ----------
+    `cash`: float
+        The cash reserve at current timestep.
+    `lc`: float
+        Loan cap, the amount of banking financing available.
+    `debt`: float
+        The amount of debt at current timestep. 
+
+    Returns
+    -------
+        float: The allowed amount of loan.
+    """
+    allowed_loan = min(abs(cash), lc - debt - abs(cash))
     return max(0, allowed_loan)
+
+
+# Implementation 2: new
+def get_loan_new(cash, lc, debt, ft):
+    """
+    The new version to calculate the amount of loan 
+    a company is allowed to get.
+
+    Parameters
+    ----------
+    `cash`: float
+        The cash reserve at current timestep.
+    `lc`: float
+        Loan cap, the amount of banking financing available.
+    `debt`: float
+        The amount of debt at current timestep. 
+    `ft`: float
+        Financing threshold.
+
+    Returns
+    -------
+        float: The allowed amount of loan.
+    """
+    return min(max(lc - debt, 0), max(ft - cash, 0))
 
 
 # %% Calculate interest needed to pay
 def interest_to_pay(loan, annual_rate, borrow_period=120):
-    return loan * annual_rate * (365 / borrow_period)
+    return loan * annual_rate * (borrow_period / 365)
 
 
 # %% Check if the node is illiuid and expects no profits
@@ -149,7 +199,6 @@ total_demands = 0
 writer = Writer(sim_id=0)
 
 
-%time
 # %% Iterate over time steps: t1 ... t_max.
 for t in range(1, t_max + 1):
     demand = get_demand(distribution, **params)
@@ -323,7 +372,7 @@ for t in range(1, t_max + 1):
         if cash_reserve <= financing_threshold:
             power = node["power"]
             debt = node["debt"]
-            loan_cap = get_loan_cap(cash_reserve, power)
+            loan_cap = node["loan_cap"]
             loan = get_loan(cash_reserve, loan_cap, debt)
         
         interest = interest_to_pay(loan, bank_annual_rate, loan_repayment_time)
@@ -333,6 +382,8 @@ for t in range(1, t_max + 1):
         payables[node_idx][loan_repayment_time-1] += loan_repayment
         G.nodes[node_idx]["cash"] += loan
         G.nodes[node_idx]["debt"] += loan_repayment
+        G.nodes[node_idx]["loan_cap"] = get_loan_cap(G.nodes[node_idx]["cash"], 
+                                                     G.nodes[node_idx]["power"])
 
         # Check if the node is bankrupt. 
         # If so, remove its both in and out edges from the network
@@ -342,12 +393,13 @@ for t in range(1, t_max + 1):
         if is_bankrupt(cash_reserve + loan, total_receiveable, total_payable):
             # Output: to terminal
             print(f"\n*WARNING*: Node {node_idx} is bankrupt!!!")
+            print(f"Current cash is {cash_reserve}, available bank financing is {loan}:")
             # Output: to file
             output_at_t["is_bankrupt"][node_idx] = True
             G.nodes[node_idx]["is_bankrupt"] = True
             ebunch = list(G.in_edges(node_idx)) + list(G.out_edges(node_idx))
             G.remove_edges_from(ebunch)
-            network.draw()
+            # network.draw()
     
     # Write to file
     writer.append(output_at_t)

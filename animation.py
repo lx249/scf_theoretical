@@ -20,7 +20,7 @@ def get_orders(data):
     # Select the rows in which nodes has incoming orders
     rows_w_order = data[~data["order_from"].isna()]
     orders = {}
-    for i, row in rows_w_order.iterrows():
+    for _, row in rows_w_order.iterrows():
         buyer, seller = row["order_from"], row["node_idx"]
         orders[(buyer, seller)] = int(row["buy_amount"])
     return orders
@@ -57,9 +57,14 @@ def update(ts, data, network, ax):
     # Plotting
     add_info = "" if not bankrupt_nodes else f": node(s) {', '.join(map(str, bankrupt_nodes))} bankrupted"
     ax.set_title(f"Time step [{ts}] {add_info}")
+    # ax.text(0, 0.05, "orders", ha="left", va="center")
+    # ax.arrow(0, 0, dx=0.075, dy=0, fc="b", ec="b", head_length=0.01, width=0.01)
     nx.draw_networkx(G, layout, node_color=node_colors, labels=node_labels, **graph_options)
     nx.draw_networkx_edges(G, layout, edgelist=list(orders.keys()), **edge_options)
     nx.draw_networkx_edge_labels(G, layout, edge_labels=orders, **edge_label_options)
+    
+    # Legend 
+    # ax.legend(["order"])
 
 
 def animate():
@@ -80,6 +85,7 @@ def animate():
                                    update, 
                                    frames=range(1, max_timestep+1), 
                                    interval=500, 
+                                   repeat=False,
                                    fargs=(data, network, ax))
 
     # Toggle animation
@@ -97,7 +103,7 @@ def animate():
     # Save animation to a `.gif`
     # anim.save('sim_animation.gif', writer='imagemagick')
     writer = animation.FFMpegWriter(fps=2)
-    anim.save("sim_animation.mp4", writer=writer)
+    anim.save("sim_animation.mp4", writer=writer, dpi=100)
 
     plt.show()
 

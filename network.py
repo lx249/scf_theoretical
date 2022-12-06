@@ -140,12 +140,14 @@ class SCNetwork(object):
         for _, row in nodes_df.iterrows():
             node_idx = row["node_idx"]
             tier_no = node_depths[node_idx]
+            power = _node_power(homogenity, tiers[tier_no]["width"], 2)
             attrs[node_idx] = {
                                 "buy_price": row["buy_price"], 
                                 "sell_price": row["sell_price"],
                                 "cash": row["cash"],
                                 "tier": tier_no,
-                                "power": _node_power(homogenity, tiers[tier_no]["width"], 2),
+                                "power": power,
+                                "loan_cap": (power + 1) * row["cash"]
                               }
         
         nx.set_node_attributes(G, attrs)

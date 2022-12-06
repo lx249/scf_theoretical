@@ -25,16 +25,16 @@ node_options:
     color: green
     label: market
   other:
-    color: snow 
+    color: yellow
     label: null
   raw_material: 
-    color: blue
+    color: green
     label: raw material
   
 
 # Drawing options for adding edges
 edge_options:
-  arrowstyle: simple, head_length=0.75, head_width=0.75, tail_width=0.2
+  arrowstyle: simple
   edge_color: blue
 
 
