@@ -118,7 +118,8 @@ def get_loan_new(cash, lc, debt, ft):
     -------
         float: The allowed amount of loan.
     """
-    return min(max(lc - debt, 0), max(ft - cash, 0))
+    # return min(max(lc - debt, 0), max(ft - cash, 0))
+    return max(min(lc - debt, ft - cash), 0)
 
 
 # %% Calculate interest needed to pay
@@ -225,6 +226,7 @@ for t in range(1, t_max + 1):
                 the seller's stock.
         """
         stock = G.nodes[seller]["stock"]
+        print(" #", buyer, seller)
         receive_amount = min(stock, buy_amount)
         print(f"  ({buyer:>2}->{seller:>2}): buy {buy_amount}, receive {receive_amount}")
 
@@ -311,37 +313,6 @@ for t in range(1, t_max + 1):
 
     ### Updating for next timestep ###
     """
-    Action: Update stock, unfilled_orders, issued_orders of both buyer and seller
-    """
-    for (buyer, seller), (buy_amount, receive_amount, _) in new_orders.items():
-        G.nodes[buyer]["stock"] += receive_amount
-        G.nodes[seller]["stock"] -= receive_amount
-        G.nodes[buyer]["unfilled"] -= receive_amount
-        G.nodes[seller]["unfilled"] += (buy_amount - receive_amount)
-        G.nodes[seller]["issued"] += receive_amount
-
-        # Output: set the values of the remaining four columns
-        output_at_t["order_from"][seller] = buyer
-        output_at_t["buy_amount"][seller] = buy_amount
-        _purchase_value = G.nodes[seller]["sell_price"] * receive_amount
-        output_at_t["purchase_value"][buyer] = _purchase_value
-        output_at_t["sale_value"][seller] = _purchase_value
-        
- 
-    """
-    Action: Update new orders, adding follow-up replenish orders.
-    """
-    replenish_orders = {}
-    for (buyer, seller), (_, _, replenish_required) in new_orders.items():
-        if replenish_required:
-            # Add follow-up replenish order
-            new_seller = select_seller(G, seller)
-            new_buyer = seller
-            buy_amount = G.nodes[new_buyer]["unfilled"]
-            replenish_orders[(new_buyer, new_seller)] = (buy_amount, 0, False)
-    new_orders = replenish_orders
-
-    """
     Action: Selecting financing threshold.
             Now, the threshold value is set as 0, which may introduce ML methods 
             to predict its value. The potential methods are: 
@@ -366,14 +337,19 @@ for t in range(1, t_max + 1):
         # Omit backrupt nodes
         if node["is_bankrupt"]: 
             continue
-        cash_reserve = node["cash"]
+        """
+        If cash is below financing threshold and debt is below loan cap, 
+        then seek financing, apply for loan.
+        """
         loan = 0
-        # If cash is below financing threshold, seek financing, get the loan it can secure
-        if cash_reserve <= financing_threshold:
+        cash_reserve = node["cash"]
+        debt = node["debt"]
+        loan_cap = node["loan_cap"]
+        if (cash_reserve <= financing_threshold and 
+            debt < loan_cap
+        ):
             power = node["power"]
-            debt = node["debt"]
-            loan_cap = node["loan_cap"]
-            loan = get_loan(cash_reserve, loan_cap, debt)
+            loan = get_loan_new(cash_reserve, loan_cap, debt, financing_threshold)
         
         interest = interest_to_pay(loan, bank_annual_rate, loan_repayment_time)
         loan_repayment = loan + interest
@@ -382,6 +358,7 @@ for t in range(1, t_max + 1):
         payables[node_idx][loan_repayment_time-1] += loan_repayment
         G.nodes[node_idx]["cash"] += loan
         G.nodes[node_idx]["debt"] += loan_repayment
+        # Update loan cap
         G.nodes[node_idx]["loan_cap"] = get_loan_cap(G.nodes[node_idx]["cash"], 
                                                      G.nodes[node_idx]["power"])
 
@@ -400,6 +377,36 @@ for t in range(1, t_max + 1):
             ebunch = list(G.in_edges(node_idx)) + list(G.out_edges(node_idx))
             G.remove_edges_from(ebunch)
             # network.draw()
+
+    """
+    Action: Update stock, unfilled_orders, issued_orders of both buyer and seller
+    """
+    for (buyer, seller), (buy_amount, receive_amount, _) in new_orders.items():
+        G.nodes[buyer]["stock"] += receive_amount
+        G.nodes[seller]["stock"] -= receive_amount
+        G.nodes[buyer]["unfilled"] -= receive_amount
+        G.nodes[seller]["unfilled"] += (buy_amount - receive_amount)
+        G.nodes[seller]["issued"] += receive_amount
+
+        # Output: set the values of the remaining four columns
+        output_at_t["order_from"][seller] = buyer
+        output_at_t["buy_amount"][seller] = buy_amount
+        _purchase_value = G.nodes[seller]["sell_price"] * receive_amount
+        output_at_t["purchase_value"][buyer] = _purchase_value
+        output_at_t["sale_value"][seller] = _purchase_value
+
+    """
+    Action: Update new orders, adding follow-up replenish orders.
+    """
+    replenish_orders = {}
+    for (buyer, seller), (_, _, replenish_required) in new_orders.items():
+        if replenish_required and buyer not in bankrupt_nodes:
+            # Add follow-up replenish order
+            new_seller = select_seller(G, seller)
+            new_buyer = seller
+            buy_amount = G.nodes[new_buyer]["unfilled"]
+            replenish_orders[(new_buyer, new_seller)] = (buy_amount, 0, False)
+    new_orders = replenish_orders
     
     # Write to file
     writer.append(output_at_t)
