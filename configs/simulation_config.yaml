@@ -25,7 +25,7 @@ invoice_term: 60
 window_size: 60 
 
 # Demands generation
-demand_generator: poisson
+demand_generator: normal
 distributions:
     normal:
       mean: 50
