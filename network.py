@@ -147,7 +147,7 @@ class SCNetwork(object):
                                 "cash": row["cash"],
                                 "tier": tier_no,
                                 "power": power,
-                                "loan_cap": (power + 1) * row["cash"]
+                                "max_debt": (power + 1) * row["cash"],
                               }
         
         nx.set_node_attributes(G, attrs)

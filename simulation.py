@@ -58,8 +58,8 @@ def get_demand(distribution, **params):
         raise ValueError(f"Unrecognised demand generator '{distribution}'!")
 
 
-# %% Calculate the cap of available loan
-def get_loan_cap(cash, power):
+# %% Calculate the amount of financing avaialble, i.e, max debt allowed.
+def get_max_debt(cash, power):
     """
     Calculate the amount financing available, i.e., banking mandate limit.
     The minimum loan cap is 0 as negative loan cap is unreasonable.
@@ -344,12 +344,12 @@ for t in range(1, t_max + 1):
         loan = 0
         cash_reserve = node["cash"]
         debt = node["debt"]
-        loan_cap = node["loan_cap"]
+        max_debt = node["max_debt"]
         if (cash_reserve <= financing_threshold and 
-            debt < loan_cap
+            debt < max_debt
         ):
             power = node["power"]
-            loan = get_loan_new(cash_reserve, loan_cap, debt, financing_threshold)
+            loan = get_loan_new(cash_reserve, max_debt, debt, financing_threshold)
         
         interest = interest_to_pay(loan, bank_annual_rate, loan_repayment_time)
         loan_repayment = loan + interest
@@ -363,7 +363,7 @@ for t in range(1, t_max + 1):
         output_at_t["debt"][node_idx] = G.nodes[node_idx]["debt"]
         output_at_t["b_loan"][node_idx] = loan
         # Update loan cap
-        G.nodes[node_idx]["loan_cap"] = get_loan_cap(G.nodes[node_idx]["cash"], 
+        G.nodes[node_idx]["max_debt"] = get_max_debt(G.nodes[node_idx]["cash"], 
                                                      G.nodes[node_idx]["power"])
 
         # Check if the node is bankrupt. 
