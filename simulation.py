@@ -367,12 +367,11 @@ for t in range(1, t_max + 1):
         if G.nodes[node_idx]["cash"] <= 0: 
             deficit = abs(G.nodes[node_idx]["cash"])
             receive_early = min(receivables[node_idx][invoice_term], deficit)
-            print("Early: ", receive_early)
-            G.nodes[node_idx]["cash"] += receive_early
+            discount = interest_to_pay(receive_early,
+                                       invoice_annual_rate,
+                                       invoice_term)
+            G.nodes[node_idx]["cash"] += (receive_early - discount)
             receivables[node_idx][invoice_term] -= receive_early
-            payables[node_idx][invoice_term] += interest_to_pay(receive_early, 
-                                                                invoice_annual_rate, 
-                                                                invoice_term)
         # Update loan cap
         G.nodes[node_idx]["max_debt"] = get_max_debt(G.nodes[node_idx]["cash"], 
                                                      G.nodes[node_idx]["power"])
