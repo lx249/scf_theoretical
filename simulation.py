@@ -272,11 +272,11 @@ for t in range(1, t_max + 1):
 
         _stock      = np.nan if _bankrupt else G.nodes[node_idx]["stock"]
         _cash       = np.nan if _bankrupt else G.nodes[node_idx]["cash"]
+        _debt       = np.nan if _bankrupt else G.nodes[node_idx]["debt"]
         _unfilled   = np.nan if _bankrupt else G.nodes[node_idx]["unfilled"]
         _issued     = np.nan if _bankrupt else G.nodes[node_idx]["issued"]
         _received   = np.nan if _bankrupt else receivables[node_idx][0]
         _paid       = np.nan if _bankrupt else payables[node_idx][0]
-        _debt       = np.nan if _bankrupt else debts[node_idx][0]
         _b_loan     = np.nan if _bankrupt else 0
 
         output_at_t["timestep"].append(t)
@@ -351,7 +351,6 @@ for t in range(1, t_max + 1):
             power = node["power"]
             loan = get_loan_new(cash_reserve, loan_cap, debt, financing_threshold)
         
-        output_at_t["b_loan"][node_idx] = loan
         interest = interest_to_pay(loan, bank_annual_rate, loan_repayment_time)
         loan_repayment = loan + interest
         debts[node_idx][loan_repayment_time-1] = loan_repayment
@@ -359,6 +358,10 @@ for t in range(1, t_max + 1):
         payables[node_idx][loan_repayment_time-1] += loan_repayment
         G.nodes[node_idx]["cash"] += loan
         G.nodes[node_idx]["debt"] += loan_repayment
+        # Output 
+        output_at_t["cash"][node_idx] = G.nodes[node_idx]["cash"]
+        output_at_t["debt"][node_idx] = G.nodes[node_idx]["debt"]
+        output_at_t["b_loan"][node_idx] = loan
         # Update loan cap
         G.nodes[node_idx]["loan_cap"] = get_loan_cap(G.nodes[node_idx]["cash"], 
                                                      G.nodes[node_idx]["power"])
