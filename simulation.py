@@ -38,6 +38,7 @@ def select_seller(graph, buyer):
 
 # %% Randomly generate positive, integer amount of demands.
 def get_demand(distribution, **params):
+
     # Normal demand generator
     def normal(mean, sigma):
         d = int(np.random.normal(mean, sigma))
@@ -76,39 +77,19 @@ def get_max_debt(cash, power):
 
 # %% Bank financing: return the amount of loan approaved
 # Implementation 1: paper 
-def get_loan(cash, lc, debt): 
+def get_loan(approach, **params): 
     """
-    Calculate the amount of loan a company is allowed to get.
+    calculate the amount of loan a company is allowed to get.
+    There are two ways to calculate: old and new.
 
     Parameters
     ----------
+    `approach`: str
+        The approach to calculate how much loan a company can get.
     `cash`: float
         The cash reserve at current timestep.
-    `lc`: float
-        Loan cap, the amount of banking financing available.
-    `debt`: float
-        The amount of debt at current timestep. 
-
-    Returns
-    -------
-        float: The allowed amount of loan.
-    """
-    allowed_loan = min(abs(cash), lc - debt - abs(cash))
-    return max(0, allowed_loan)
-
-
-# Implementation 2: new
-def get_loan_new(cash, lc, debt, ft):
-    """
-    The new version to calculate the amount of loan 
-    a company is allowed to get.
-
-    Parameters
-    ----------
-    `cash`: float
-        The cash reserve at current timestep.
-    `lc`: float
-        Loan cap, the amount of banking financing available.
+    `max_debt`: float
+        The max allowed debt, i.e., the amount of banking financing available.
     `debt`: float
         The amount of debt at current timestep. 
     `ft`: float
@@ -118,10 +99,25 @@ def get_loan_new(cash, lc, debt, ft):
     -------
         float: The allowed amount of loan.
     """
-    # return min(max(lc - debt, 0), max(ft - cash, 0))
-    return max(min(lc - debt, ft - cash), 0)
 
+    def old(cash, max_debt, debt):
+        allowed_loan = min(abs(cash), max_debt - debt)
+        return max(0, allowed_loan)
 
+    def new(cash, max_debt, debt, ft):
+        return max(min(max_debt - debt, ft - cash), 0)
+
+    cash = params["cash"]
+    max_debt = params["max_debt"]
+    debt = params["debt"]
+    ft = params["ft"]
+    
+    if approach == "new":
+        return new(cash, max_debt, debt, ft)
+    else:
+        return old(cash, max_debt, debt)
+
+    
 # %% Calculate interest needed to pay
 def interest_to_pay(loan, annual_rate, borrow_period=120):
     return loan * annual_rate * (borrow_period / 365)
@@ -132,8 +128,8 @@ def is_bankrupt(cash_available, total_receiveable, total_payable):
     return cash_available <= 0 and total_receiveable < total_payable
 
 
-# %% Select a financing threshold
-def select_financing_threshold():
+# %% Select a financing threshold (ft).
+def select_ft():
     pass
 
 
@@ -314,13 +310,13 @@ for t in range(1, t_max + 1):
 
     ### Updating for next timestep ###
     """
-    Action: Selecting financing threshold.
+    Action: Selecting financing threshold (ft).
             Now, the threshold value is set as 0, which may introduce ML methods 
             to predict its value. The potential methods are: 
                 1) moving average; 
                 2) time series forecasting methods.
     """
-    financing_threshold = 0
+    ft = 0
 
 
     """
@@ -345,11 +341,13 @@ for t in range(1, t_max + 1):
         cash_reserve = node["cash"]
         debt = node["debt"]
         max_debt = node["max_debt"]
-        if (cash_reserve <= financing_threshold and 
-            debt < max_debt
-        ):
+        if cash_reserve <= ft:
             power = node["power"]
-            loan = get_loan_new(cash_reserve, max_debt, debt, financing_threshold)
+            loan = get_loan("new", 
+                            cash=cash_reserve, 
+                            max_debt=max_debt, 
+                            debt=debt, 
+                            ft=ft)
         
         interest = interest_to_pay(loan, bank_annual_rate, loan_repayment_time)
         loan_repayment = loan + interest
@@ -374,7 +372,7 @@ for t in range(1, t_max + 1):
         if is_bankrupt(cash_reserve + loan, total_receiveable, total_payable):
             # Output: to terminal
             print(f"\n*WARNING*: Node {node_idx} is bankrupt!!!")
-            print(f"Current cash is {cash_reserve}, available bank financing is {loan}:")
+            print(f"Current cash: {cash_reserve}, max debt: {max_debt}, SC loan: {loan}.")
             # Output: to file
             output_at_t["is_bankrupt"][node_idx] = True
             G.nodes[node_idx]["is_bankrupt"] = True
@@ -398,6 +396,7 @@ for t in range(1, t_max + 1):
         _purchase_value = G.nodes[seller]["sell_price"] * receive_amount
         output_at_t["purchase_value"][buyer] = _purchase_value
         output_at_t["sale_value"][seller] = _purchase_value
+
 
     """
     Action: Update new orders, adding follow-up replenish orders.
