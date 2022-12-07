@@ -148,12 +148,14 @@ t_max = sim_config["t_max"]
 operation_fee = sim_config["operation_fee"]
 loan_repayment_time = sim_config["loan_repayment_time"]
 bank_annual_rate = sim_config["bank_annual_rate"]
+invoice_annual_rate = sim_config["invoice_annual_rate"]
+invoice_term = sim_config["invoice_term"]
 window_size = sim_config["window_size"]
 
 # Demand generator by normal distribution
-demand_generator = sim_config["demand_generators"][0] 
-distribution = demand_generator["distribution"]
-params = demand_generator["params"]
+distributions = sim_config["distributions"]
+generator = sim_config["demand_generator"]
+params = distributions[generator]
 
 powers = sim_config["powers"]
 
@@ -198,7 +200,7 @@ writer = Writer(sim_id=0)
 
 # %% Iterate over time steps: t1 ... t_max.
 for t in range(1, t_max + 1):
-    demand = get_demand(distribution, **params)
+    demand = get_demand(generator, **params)
     total_demands += demand
     print("_"*30)
     print(f"[{t:<8}], demand: {demand}, total_demand: {total_demands}")
@@ -360,16 +362,28 @@ for t in range(1, t_max + 1):
         output_at_t["cash"][node_idx] = G.nodes[node_idx]["cash"]
         output_at_t["debt"][node_idx] = G.nodes[node_idx]["debt"]
         output_at_t["b_loan"][node_idx] = loan
+
+        # If cash is still not sufficient (<=0), then seek supply chain financing
+        if G.nodes[node_idx]["cash"] <= 0: 
+            deficit = abs(G.nodes[node_idx]["cash"])
+            receive_early = min(receivables[node_idx][invoice_term], deficit)
+            print("Early: ", receive_early)
+            G.nodes[node_idx]["cash"] += receive_early
+            receivables[node_idx][invoice_term] -= receive_early
+            payables[node_idx][invoice_term] += interest_to_pay(receive_early, 
+                                                                invoice_annual_rate, 
+                                                                invoice_term)
         # Update loan cap
         G.nodes[node_idx]["max_debt"] = get_max_debt(G.nodes[node_idx]["cash"], 
                                                      G.nodes[node_idx]["power"])
-
-        # Check if the node is bankrupt. 
-        # If so, remove its both in and out edges from the network
         total_receiveable = np.sum(receivables[node_idx, :])
         total_payable = np.sum(payables[node_idx, :])
         total_debt = np.sum(debts[node_idx, :])
-        if is_bankrupt(cash_reserve + loan, total_receiveable, total_payable):
+        # Check if the node is bankrupt.
+        # If so, remove its both in and out edges from the network
+        if is_bankrupt(G.nodes[node_idx]["cash"], 
+                       total_receiveable, 
+                       total_payable):
             # Output: to terminal
             print(f"\n*WARNING*: Node {node_idx} is bankrupt!!!")
             print(f"Current cash: {cash_reserve}, max debt: {max_debt}, SC loan: {loan}.")

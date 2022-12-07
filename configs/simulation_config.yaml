@@ -25,14 +25,14 @@ invoice_term: 60
 window_size: 60 
 
 # Demands generation
-demand_generators:
-    - distribution: normal
-      params: 
-        mean: 50
-        sigma: 10
-    - distribution: poisson
-      parmas: 
-        lambda: 5
+demand_generator: poisson
+distributions:
+    normal:
+      mean: 50
+      sigma: 10
+    poisson:
+      lambda: 5
+
 
 # Firm's power (size)
 powers: 
