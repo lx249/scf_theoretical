@@ -18,28 +18,47 @@ graph_options:
   font_color: black
   width: 0.75 
   alpha: 0.75
-  edge_color: darkgray
+  edge_color: gray
 
 node_options:
   market:
-    color: green
+    color: cyan
     label: market
-  other:
+  raw_material: 
+    color: cyan
+    label: raw material
+  healthy:
     color: yellow
     label: null
-  raw_material: 
-    color: green
-    label: raw material
+  bankrupt:
+    color: lightgray
+    label: null
+  
   
 
 # Drawing options for adding edges
-edge_options:
-  arrowstyle: simple
-  edge_color: blue
+flow_options:
+    order: 
+      arrowstyle: simple
+      edge_color: blue
+    material:
+      arrowstyle: simple
+      alpha: 0.5
+      edge_color: red
+    cash:
+      arrowstyle: simple
+      edge_color: green
 
 
 # Edge label options
-edge_label_options:
-  font_color: blue
+flow_label_options:
+  order:
+    font_color: blue
+  material:
+    font_color: red
+  cash:
+    font_color: green
+
+
 
 

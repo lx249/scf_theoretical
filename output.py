@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-# The columns of the output dataframe. 
+# The columns names and their dtypes.
 column_dtypes = [
     ("timestep", int),
     ("node_idx", int),
@@ -12,6 +12,7 @@ column_dtypes = [
     ("cash", float),
     ("order_from", int),
     ("buy_amount", int),
+    ("receive_amount", int),
     ("purchase_value", float),
     ("sale_value", float),
     ("unfilled", int),  # Unfilled orders

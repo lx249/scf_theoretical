@@ -287,6 +287,7 @@ for t in range(1, t_max + 1):
         output_at_t["cash"].append(_cash)
         output_at_t["order_from"].append(np.nan)
         output_at_t["buy_amount"].append(np.nan)
+        output_at_t["receive_amount"].append(np.nan)
         output_at_t["purchase_value"].append(np.nan)
         output_at_t["sale_value"].append(np.nan)
         output_at_t["unfilled"].append(_unfilled)
@@ -406,6 +407,7 @@ for t in range(1, t_max + 1):
         # Output: set the values of the remaining four columns
         output_at_t["order_from"][seller] = buyer
         output_at_t["buy_amount"][seller] = buy_amount
+        output_at_t["receive_amount"][seller] = receive_amount
         _purchase_value = G.nodes[seller]["sell_price"] * receive_amount
         output_at_t["purchase_value"][buyer] = _purchase_value
         output_at_t["sale_value"][seller] = _purchase_value

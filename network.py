@@ -67,7 +67,7 @@ def _node_power(homogenity, tier_width, min_tier_width=2):
 # %% Calculate node position.
 # The entire drawing area is spanning from bottom left (0, 0) (origin point)
 # to top right (1, 1)
-def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=0.1):
+def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=1):
     left_x, right_x = padding_x, 1 - padding_x
     bottom_y, top_y = padding_y, 1 - padding_y
     canvas_width, canvas_length = right_x - left_x, top_y - bottom_y
@@ -87,24 +87,6 @@ def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=0.
             layout[v] = (x_pos, y_pos)
     return layout
 
-
-# %% Get the node labels
-def _get_node_labels(graph, node_options):
-    labels = {}
-    for node_idx in range(graph.number_of_nodes()):
-        labels[node_idx] = str(node_idx) 
-    labels[0] = node_options["raw_material"]["label"]
-    labels[19] = node_options["market"]["label"]
-    return labels
-
-
-# %% Get the node colors 
-def _get_node_colors(graph, node_options):
-    other_color = node_options["other"]["color"]
-    colors = [other_color] * graph.number_of_nodes()
-    colors[0] = node_options["raw_material"]["color"]
-    colors[19] = node_options["market"]["color"]
-    return colors
 
 
 # %% Draw graph and return current figure and axes
@@ -133,8 +115,7 @@ class SCNetwork(object):
         node_depths, tiers = _calc_tiers(G)
         max_tier_width, num_tiers = _shape_of_tiers(tiers)
         layout = _tiered_layout(tiers, max_tier_width, num_tiers)
-        node_colors = _get_node_colors(G, config["node_options"])
-        node_labels = _get_node_labels(G, config["node_options"])
+        
 
         attrs = {}  
         for _, row in nodes_df.iterrows():
@@ -172,13 +153,32 @@ class SCNetwork(object):
         self.num_tiers = num_tiers
         self.max_tier_width = max_tier_width
         self.layout = layout
-        self.node_colors = node_colors
-        self.node_labels = node_labels
-    
+        self.node_colors = self._get_node_colors(config["node_options"])
+        self.node_labels = self._get_node_labels(config["node_options"])
+
+    # %% Get the node labels
+
+
+    def _get_node_labels(self, node_options):
+        labels = {}
+        for node_idx in range(self.G.number_of_nodes()):
+            labels[node_idx] = str(node_idx)
+        labels[self.dummy_raw_material] = node_options["raw_material"]["label"]
+        labels[self.dummy_market] = node_options["market"]["label"]
+        return labels
+
+
+    # %% Get the node colors
+    def _get_node_colors(self, node_options):
+        _color = node_options["healthy"]["color"]
+        colors = [_color] * self.G.number_of_nodes()
+        colors[self.dummy_raw_material] = node_options["raw_material"]["color"]
+        colors[self.dummy_market] = node_options["market"]["color"]
+        return colors
+
 
     def draw(self):
         graph_options = self.config["graph_options"]
-        node_options = self.config["node_options"]
         fig, ax = _draw_graph(self.G, 
                               self.layout, 
                               self.node_colors, 

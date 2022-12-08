@@ -1,9 +1,12 @@
-# %% 
+# %%
 import networkx as nx
 import numpy as np
-import pandas as pd 
-import matplotlib.pyplot as plt 
+import pandas as pd
+import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from matplotlib.lines import Line2D
+from matplotlib.patches import FancyArrowPatch
+
 from functools import partial
 
 from network import SCNetwork
@@ -16,14 +19,28 @@ def get_data_at_t(data, timestep):
     return data[data.timestep == timestep]
 
 
-def get_orders(data):
+def get_order_flow(data):
     # Select the rows in which nodes has incoming orders
     rows_w_order = data[~data["order_from"].isna()]
-    orders = {}
+    order_flow = {}
     for _, row in rows_w_order.iterrows():
         buyer, seller = row["order_from"], row["node_idx"]
-        orders[(buyer, seller)] = int(row["buy_amount"])
-    return orders
+        order_flow[(buyer, seller)] = int(row["buy_amount"])
+    return order_flow
+
+
+def get_material_flow(data):
+    """
+    Material need a timestep to be delivered.
+    Material flow has lag of one timestep from seller to buyer.
+    The last meterial will arrive at `max_timestep + 1`.
+    """
+    rows_w_order = data[~data["order_from"].isna()]
+    material_flow = {}
+    for _, row in rows_w_order.iterrows():
+        buyer, seller = row["order_from"], row["node_idx"]
+        material_flow[(seller, buyer)] = int(row["receive_amount"])
+    return material_flow
 
 
 # Return the list of bankrupt nodes
@@ -32,39 +49,78 @@ def get_bankrupt_nodes(data):
     return list(bankrupt_nodes["node_idx"])
 
 
-def update(ts, data, network, ax):
+def update(ts, data, network, ax, max_timestep):
     ax.clear()
+    ax.set_ymargin(0.2)
 
     G = network.G.copy()
     layout = network.layout.copy()
     node_colors = network.node_colors.copy()
     node_labels = network.node_labels.copy()
 
-    # Update at current time step
+    # Orders being placed at current timestep
     data_at_t = get_data_at_t(data, ts)
-    orders = get_orders(data_at_t)
+    order_flow = get_order_flow(data_at_t)
+    # Material ordered at the prev `t` being delivered at current`t`.
+    data_at_prev_t = get_data_at_t(data, ts - 1)
+    material_flow = get_material_flow(data_at_prev_t)
+
+    
+    if ts == (max_timestep + 1): 
+        data_at_t = data_at_prev_t
     bankrupt_nodes = get_bankrupt_nodes(data_at_t)
+    bankrupt_info = "" if not bankrupt_nodes else f": node(s) {', '.join(map(str, bankrupt_nodes))} bankrupted"
     for node_idx in bankrupt_nodes:
-        node_colors[node_idx] = "red"
+        node_colors[node_idx] = network.config["node_options"]["bankrupt"]["color"]
         ebunch = list(G.in_edges(node_idx)) + list(G.out_edges(node_idx))
         G.remove_edges_from(ebunch)
 
+    
+    # Check if the network is connected.
+    unconnected_info = ""
+    if not nx.has_path(G, network.dummy_raw_material,  network.dummy_market):
+        unconnected_info = "\nNetwork is unconnected, simulation ends."
+
     # Styling
     graph_options = network.config["graph_options"]
-    edge_options = network.config["edge_options"]
-    edge_label_options = network.config["edge_label_options"]
+
+    order_flow_options = network.config["flow_options"]["order"]
+    material_flow_options = network.config["flow_options"]["material"]
+    cash_flow_options = network.config["flow_options"]["cash"]
+
+    order_flow_label_options = network.config["flow_label_options"]["order"]
+    material_flow_label_options = network.config["flow_label_options"]["material"]
+    cash_flow_label_options = network.config["flow_label_options"]["cash"]
+   
 
     # Plotting
-    add_info = "" if not bankrupt_nodes else f": node(s) {', '.join(map(str, bankrupt_nodes))} bankrupted"
-    ax.set_title(f"Time step [{ts}] {add_info}")
+    ax.set_title(f"Time step [{ts}] {bankrupt_info} {unconnected_info}")
     # ax.text(0, 0.05, "orders", ha="left", va="center")
     # ax.arrow(0, 0, dx=0.075, dy=0, fc="b", ec="b", head_length=0.01, width=0.01)
     nx.draw_networkx(G, layout, node_color=node_colors, labels=node_labels, **graph_options)
-    nx.draw_networkx_edges(G, layout, edgelist=list(orders.keys()), **edge_options)
-    nx.draw_networkx_edge_labels(G, layout, edge_labels=orders, **edge_label_options)
-    
-    # Legend 
-    # ax.legend(["order"])
+
+    nx.draw_networkx_edges(G, layout, edgelist=list(order_flow.keys()), **order_flow_options)
+    nx.draw_networkx_edge_labels(G, layout, edge_labels=order_flow, **order_flow_label_options)
+
+    nx.draw_networkx_edges(G, layout, edgelist=list(material_flow.keys()), **material_flow_options)
+    nx.draw_networkx_edge_labels(G, layout, edge_labels=material_flow, **material_flow_label_options)
+
+    # Legend
+    legend_elements = [
+        Line2D((0, 0), (1, 1), 
+              label='Order flow', linewidth=3, alpha=0.75,
+              color=order_flow_options["edge_color"]),
+        Line2D((0, 0), (1, 1),
+               label='Material flow', linewidth=3, alpha=0.75,
+               color=material_flow_options["edge_color"]),
+        Line2D((0, 0), (1, 1),
+               label='Cash flow', linewidth=3, alpha=0.75,
+               color=cash_flow_options["edge_color"]),
+    ]
+    ax.legend(handles=legend_elements, 
+              loc='lower center', 
+              frameon=False,
+              ncol=3)
 
 
 def animate():
@@ -77,21 +133,22 @@ def animate():
     network = SCNetwork(config_file="configs/network_config.yaml")
     fig, ax = network.draw()
 
-    # Remove frames 
+    # Remove frames
     for pos in ["top", "left", "bottom", "right"]:
         ax.spines[pos].set_visible(False)
 
-    anim = animation.FuncAnimation(fig, 
-                                   update, 
-                                   frames=range(1, max_timestep+1), 
-                                   interval=500, 
+    anim = animation.FuncAnimation(fig,
+                                   update,
+                                   frames=range(1, max_timestep+2), 
+                                   interval=500,
                                    repeat=False,
-                                   fargs=(data, network, ax))
+                                   fargs=(data, network, ax, max_timestep))
 
     # Toggle animation
     paused = False
+
     def toggle_pause(e):
-        nonlocal paused 
+        nonlocal paused
         if paused:
             anim.resume()
         else:
@@ -112,9 +169,3 @@ def animate():
 if __name__ == "__main__":
 
     animate()
-    
-
-    
-
-
-
