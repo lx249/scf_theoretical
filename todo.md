@@ -20,7 +20,8 @@
 - `stock` = Inventory: int. Number of stores material units
 - `unfilled` = Unfilled Orders: int. Stored number of orders that node still has to fill.
 - `issued` = Issue orders: int. Stored number of orders that node has issued that have not been fulfilled.
-- `buy_amount` = New Orders: int. Number of new orders issued by that node at that given timestep.
+- `buy_amount` = The actual amount in the new Orders: int. Number of new orders issued by that node at that given timestep.
+- `receive_amount` = The actual amount receive: int. Number of new orders received by that node at that given timestep.
 - `purchase_value` = New Purchase cost: float. The associated total price of a given purchase at a timestep
 - `sale_value` = New Sale Value: float. The associated total price at a given timestep of all sales.
 - `is_bankrupt` = Bankrupt: bool. Denotes if a node has become bankrupt and hence removed from the simulation.
