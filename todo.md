@@ -11,7 +11,7 @@
 - medium_company_sale_skew
 
 
-## Columns
+## Columns of output.csv
 - `timestep`: int. The timestep this data is recorded at.
 - `node_idx` = Node ID: int
 - `cash` = Cash: float. Liquid cash of node at present time (t+0). I guess should be possible to define as max(recievables_(t+0)-payables_(t+0),0).
@@ -24,6 +24,8 @@
 - `receive_amount` = The actual amount receive: int. Number of new orders received by that node at that given timestep.
 - `purchase_value` = New Purchase cost: float. The associated total price of a given purchase at a timestep
 - `sale_value` = New Sale Value: float. The associated total price at a given timestep of all sales.
+- `cash_from` = Sender of cash: int. The node which sends the money to another node.
+- `cash_amount` = Amound of payment: float. The amount of payment from `cash_from` to the `node_idx`. 
 - `is_bankrupt` = Bankrupt: bool. Denotes if a node has become bankrupt and hence removed from the simulation.
 - `receivable` = Receivables: float. Recievables at timestep t0
 - `payable` = Payables: float. Payables at timestep t0
