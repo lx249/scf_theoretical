@@ -179,10 +179,12 @@ Receivable, payable cash, and debts until repayment time
 `receivables`, `payables`, and `debts` are sliding windows 
 that update over the time step.
 Note: `payables` include the debts. 
+`cash_flow` records the cash movement between nodes, keyed by payment timestep.
 """
 receivables = np.zeros((num_nodes, max_payment_delay+1))
 payables = np.zeros((num_nodes, max_payment_delay+1)) 
 debts = np.zeros((num_nodes, loan_repayment_time+1))
+cash_flow = {}
 
 
 """
@@ -237,18 +239,23 @@ for t in range(1, t_max + 1):
                 If buyer or seller is dummy node, then payment occurs immediately; 
                 Otherwise, delay payment as much as possible, which is determined by a node's power.
         """
+        # Pay for the order: immediately or delay
         payout = receive_amount * G.nodes[seller]["sell_price"]
-        # Pay immediately
         if buyer == network.dummy_market or seller == network.dummy_raw_material:  
-            G.nodes[buyer]["cash"] -= payout
-            G.nodes[seller]["cash"] += payout
-        # Delay payment
-        else: 
+            delay = 0
+        else: # Delay
             p_b = G.nodes[buyer]["power"]
             p_s = G.nodes[seller]["power"]
-            delay = payment_delay_matrix[p_b - 1, p_s - 1]
-            payables[buyer][delay] += payout
-            receivables[seller][delay] += payout
+            delay = payment_delay_matrix[p_b-1, p_s-1]
+        payables[buyer][delay] += payout
+        receivables[seller][delay] += payout
+
+        # Record cash flow: moves from `buyer` to `seller` at timestep `k`
+        if payout > 0:    
+            k = t + delay # Keyed by actual payment timestep
+            if k not in cash_flow:
+                cash_flow[k] = {}
+            cash_flow[k][(buyer, seller)] = payout
 
 
     """
@@ -266,7 +273,7 @@ for t in range(1, t_max + 1):
             payout_today = (receivables[node_idx][0] 
                             - payables[node_idx][0]
                             - operation_fee)
-            G.nodes[node_idx]["cash"] += (payout_today)
+            G.nodes[node_idx]["cash"] += payout_today
 
         _stock      = np.nan if _bankrupt else G.nodes[node_idx]["stock"]
         _cash       = np.nan if _bankrupt else G.nodes[node_idx]["cash"]
@@ -290,6 +297,8 @@ for t in range(1, t_max + 1):
         output_at_t["receive_amount"].append(np.nan)
         output_at_t["purchase_value"].append(np.nan)
         output_at_t["sale_value"].append(np.nan)
+        output_at_t["cash_from"].append(np.nan)
+        output_at_t["pay_amount"].append(np.nan)
         output_at_t["unfilled"].append(_unfilled)
         output_at_t["issued"].append(_issued)
         output_at_t["b_loan"].append(_b_loan)
@@ -320,6 +329,7 @@ for t in range(1, t_max + 1):
                 2) time series forecasting methods.
     """
     ft = 0
+    # To-Do: using moving average method
 
 
     """
@@ -395,7 +405,7 @@ for t in range(1, t_max + 1):
             # network.draw()
 
     """
-    Action: Update stock, unfilled_orders, issued_orders of both buyer and seller
+    Action: Update stock, unfilled_orders, issued_orders of both buyer and seller.
     """
     for (buyer, seller), (buy_amount, receive_amount, _) in new_orders.items():
         G.nodes[buyer]["stock"] += receive_amount
@@ -411,6 +421,14 @@ for t in range(1, t_max + 1):
         _purchase_value = G.nodes[seller]["sell_price"] * receive_amount
         output_at_t["purchase_value"][buyer] = _purchase_value
         output_at_t["sale_value"][seller] = _purchase_value
+
+    """
+    Action: output cash flows at the current timestep to file.
+    """
+    if t in cash_flow:
+        for (buyer, seller), pay_amount in cash_flow[t].items():
+            output_at_t["cash_from"][seller] = buyer
+            output_at_t["pay_amount"][seller] = pay_amount
 
 
     """
@@ -437,6 +455,5 @@ for t in range(1, t_max + 1):
         print("Network is unconnected, simulation ends.")
         writer.write()
         break
-
 
 # %% Visualisation / animations

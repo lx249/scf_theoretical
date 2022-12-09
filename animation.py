@@ -7,8 +7,6 @@ import matplotlib.animation as animation
 from matplotlib.lines import Line2D
 from matplotlib.patches import FancyArrowPatch
 
-from functools import partial
-
 from network import SCNetwork
 
 
@@ -43,13 +41,22 @@ def get_material_flow(data):
     return material_flow
 
 
+def get_cash_flow(data):
+    rows_w_order = data[~data["cash_from"].isna()]
+    cash_flow = {}
+    for _, row in rows_w_order.iterrows():
+        sender, receiver = row["cash_from"], row["node_idx"]
+        cash_flow[(sender, receiver)] = row["pay_amount"]
+    return cash_flow
+
+
 # Return the list of bankrupt nodes
 def get_bankrupt_nodes(data):
     bankrupt_nodes = data.loc[data.is_bankrupt == True, ["node_idx"]]
     return list(bankrupt_nodes["node_idx"])
 
 
-def update(ts, data, network, ax, max_timestep):
+def update(ts, data, network, ax, max_ts):
     ax.clear()
     ax.set_ymargin(0.2)
 
@@ -64,9 +71,10 @@ def update(ts, data, network, ax, max_timestep):
     # Material ordered at the prev `t` being delivered at current`t`.
     data_at_prev_t = get_data_at_t(data, ts - 1)
     material_flow = get_material_flow(data_at_prev_t)
+    cash_flow = get_cash_flow(data_at_t)
 
     
-    if ts == (max_timestep + 1): 
+    if ts == (max_ts + 1): 
         data_at_t = data_at_prev_t
     bankrupt_nodes = get_bankrupt_nodes(data_at_t)
     bankrupt_info = "" if not bankrupt_nodes else f": node(s) {', '.join(map(str, bankrupt_nodes))} bankrupted"
@@ -76,10 +84,10 @@ def update(ts, data, network, ax, max_timestep):
         G.remove_edges_from(ebunch)
 
     
-    # Check if the network is connected.
+    # Check if the network is connected (failure) or not.
     unconnected_info = ""
     if not nx.has_path(G, network.dummy_raw_material,  network.dummy_market):
-        unconnected_info = "\nNetwork is unconnected, simulation ends."
+        unconnected_info = f"\nNetwork is unconnected, simulation ends at timestep {max_ts}."
 
     # Styling
     graph_options = network.config["graph_options"]
@@ -94,16 +102,19 @@ def update(ts, data, network, ax, max_timestep):
    
 
     # Plotting
-    ax.set_title(f"Time step [{ts}] {bankrupt_info} {unconnected_info}")
-    # ax.text(0, 0.05, "orders", ha="left", va="center")
-    # ax.arrow(0, 0, dx=0.075, dy=0, fc="b", ec="b", head_length=0.01, width=0.01)
+    ax.set_title(f"Timestep [{ts}] {bankrupt_info} {unconnected_info}")
     nx.draw_networkx(G, layout, node_color=node_colors, labels=node_labels, **graph_options)
 
+    # Order flows
     nx.draw_networkx_edges(G, layout, edgelist=list(order_flow.keys()), **order_flow_options)
     nx.draw_networkx_edge_labels(G, layout, edge_labels=order_flow, **order_flow_label_options)
 
+    # Material flows
     nx.draw_networkx_edges(G, layout, edgelist=list(material_flow.keys()), **material_flow_options)
     nx.draw_networkx_edge_labels(G, layout, edge_labels=material_flow, **material_flow_label_options)
+
+    nx.draw_networkx_edges(G, layout, edgelist=list(cash_flow.keys()), **cash_flow_options)
+    nx.draw_networkx_edge_labels(G, layout, edge_labels=cash_flow, **cash_flow_label_options)
 
     # Legend
     legend_elements = [
@@ -128,7 +139,7 @@ def animate():
     data_file = "output_data/output__sim_0.csv"
     data = pd.read_csv(data_file)
 
-    max_timestep = data.timestep.max()
+    max_ts = data.timestep.max()
 
     network = SCNetwork(config_file="configs/network_config.yaml")
     fig, ax = network.draw()
@@ -139,10 +150,10 @@ def animate():
 
     anim = animation.FuncAnimation(fig,
                                    update,
-                                   frames=range(1, max_timestep+2), 
+                                   frames=range(1, max_ts+2), 
                                    interval=500,
                                    repeat=False,
-                                   fargs=(data, network, ax, max_timestep))
+                                   fargs=(data, network, ax, max_ts))
 
     # Toggle animation
     paused = False

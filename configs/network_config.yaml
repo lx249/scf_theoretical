@@ -9,16 +9,20 @@ topology: diamond
 edges_file: input_data/{topology}_edges.csv
 nodes_file: input_data/{topology}_nodes.csv
 
-# Dawing options for graph
+# Network drawing condfigurations
+figsize: 
+  x: 10
+  y: 5
+
 graph_options: 
   arrows: True
-  arrowstyle: ->
+  arrowstyle: -|>
   node_size: 500
-  edgecolors: gray
+  edgecolors: lightgray
   font_color: black
-  width: 0.75 
+  width: 1
   alpha: 0.75
-  edge_color: gray
+  edge_color: lightgray
 
 node_options:
   market:
@@ -35,19 +39,20 @@ node_options:
     label: null
   
   
-
 # Drawing options for adding edges
 flow_options:
     order: 
       arrowstyle: simple
       edge_color: blue
+      alpha: 0.75
     material:
       arrowstyle: simple
-      alpha: 0.5
+      alpha: 0.75
       edge_color: red
     cash:
       arrowstyle: simple
       edge_color: green
+      alpha: 0.75
 
 
 # Edge label options
@@ -58,6 +63,7 @@ flow_label_options:
     font_color: red
   cash:
     font_color: green
+
 
 
 

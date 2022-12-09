@@ -15,6 +15,8 @@ column_dtypes = [
     ("receive_amount", int),
     ("purchase_value", float),
     ("sale_value", float),
+    ("cash_from", int), # Sender of payment
+    ("pay_amount", float), # Amount of payment
     ("unfilled", int),  # Unfilled orders
     ("issued", int),  # Issued orders
     ("b_loan", float), # Loan from bank financing
