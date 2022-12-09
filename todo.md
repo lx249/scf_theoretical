@@ -1,4 +1,4 @@
-# Yaniv's 
+# Supply Chain Financing Simulation
 
 # Output Data Structure:
 ## File name
