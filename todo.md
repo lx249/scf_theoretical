@@ -25,7 +25,7 @@
 - `purchase_value` = New Purchase cost: float. The associated total price of a given purchase at a timestep
 - `sale_value` = New Sale Value: float. The associated total price at a given timestep of all sales.
 - `cash_from` = Sender of cash: int. The node which sends the money to another node.
-- `cash_amount` = Amound of payment: float. The amount of payment from `cash_from` to the `node_idx`. 
+- `pay_amount` = Amound of payment: float. The amount of payment from `cash_from` to the `node_idx`. 
 - `is_bankrupt` = Bankrupt: bool. Denotes if a node has become bankrupt and hence removed from the simulation.
 - `receivable` = Receivables: float. Recievables at timestep t0
 - `payable` = Payables: float. Payables at timestep t0
