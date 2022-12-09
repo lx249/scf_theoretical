@@ -5,13 +5,13 @@
 - output_`sim_unique_ID`.csv
 - config_`sim_unique_ID`.yaml
 
-## Simulation Parameters
+## Input Parameters
 - mean_demand 
 - invoice_repayment_term 
 - medium_company_sale_skew
 
 
-## Columns of output.csv
+## Output Columns
 - `timestep`: int. The timestep this data is recorded at.
 - `node_idx` = Node ID: int
 - `cash` = Cash: float. Liquid cash of node at present time (t+0). I guess should be possible to define as max(recievables_(t+0)-payables_(t+0),0).
