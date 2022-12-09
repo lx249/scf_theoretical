@@ -67,7 +67,11 @@ def _node_power(homogenity, tier_width, min_tier_width=2):
 # %% Calculate node position.
 # The entire drawing area is spanning from bottom left (0, 0) (origin point)
 # to top right (1, 1)
-def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=1):
+def _tiered_layout(tiers, 
+                   max_tier_width, 
+                   num_tiers, 
+                   padding_x=0.1, 
+                   padding_y=0.1):
     left_x, right_x = padding_x, 1 - padding_x
     bottom_y, top_y = padding_y, 1 - padding_y
     canvas_width, canvas_length = right_x - left_x, top_y - bottom_y
@@ -87,16 +91,6 @@ def _tiered_layout(tiers, max_tier_width, num_tiers, padding_x=0.1, padding_y=1)
             layout[v] = (x_pos, y_pos)
     return layout
 
-
-
-# %% Draw graph and return current figure and axes
-def _draw_graph(graph, layout, node_colors, node_labels, figsize=(10, 4), **options):
-    plt.figure(figsize=figsize, frameon=False)
-    nx.draw_networkx(graph, pos=layout, 
-                     labels=node_labels, 
-                     node_color=node_colors, 
-                     **options)
-    return (plt.gcf(), plt.gca())
 
 
 # %% Supply chain network
@@ -163,8 +157,8 @@ class SCNetwork(object):
         labels = {}
         for node_idx in range(self.G.number_of_nodes()):
             labels[node_idx] = str(node_idx)
-        labels[self.dummy_raw_material] = node_options["raw_material"]["label"]
-        labels[self.dummy_market] = node_options["market"]["label"]
+        labels[self.dummy_raw_material] = ""
+        labels[self.dummy_market] = ""
         return labels
 
 
@@ -177,14 +171,24 @@ class SCNetwork(object):
         return colors
 
 
+    # %% Draw graph and return current figure and axes
+    def _draw_graph(self, figsize=(10, 4), **options):
+        plt.figure(figsize=figsize, frameon=False)
+        nx.draw_networkx(self.G, 
+                         pos=self.layout,
+                         labels=self.node_labels,
+                         node_color=self.node_colors,
+                         **options)
+        return (plt.gcf(), plt.gca())
+
+
     def draw(self):
         graph_options = self.config["graph_options"]
-        fig, ax = _draw_graph(self.G, 
-                              self.layout, 
-                              self.node_colors, 
-                              self.node_labels, 
-                              **graph_options)
+        fig, ax = self._draw_graph(self.config["figsize"], **graph_options)
         return fig, ax
+
+
+
 
 
     

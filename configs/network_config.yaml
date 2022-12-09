@@ -9,28 +9,35 @@ topology: diamond
 edges_file: input_data/{topology}_edges.csv
 nodes_file: input_data/{topology}_nodes.csv
 
-# Network drawing condfigurations
-figsize: 
-  x: 10
-  y: 5
+# Network animation condfigurations
+figsize: [10, 4]
+
 
 graph_options: 
   arrows: True
   arrowstyle: -|>
   node_size: 500
   edgecolors: lightgray
-  font_color: black
+  font_color: purple
+  font_size: 11
   width: 1
   alpha: 0.75
   edge_color: lightgray
 
+
+label_options:
+  font_color: purple
+  font_size: 11
+  alpha: 0.75
+
+
 node_options:
   market:
     color: cyan
-    label: market
+    label: "market"
   raw_material: 
     color: cyan
-    label: raw material
+    label: "raw\nmaterial"
   healthy:
     color: yellow
     label: null

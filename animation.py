@@ -68,10 +68,10 @@ def update(ts, data, network, ax, max_ts):
     # Orders being placed at current timestep
     data_at_t = get_data_at_t(data, ts)
     order_flow = get_order_flow(data_at_t)
+    cash_flow = get_cash_flow(data_at_t)
     # Material ordered at the prev `t` being delivered at current`t`.
     data_at_prev_t = get_data_at_t(data, ts - 1)
     material_flow = get_material_flow(data_at_prev_t)
-    cash_flow = get_cash_flow(data_at_t)
 
     
     if ts == (max_ts + 1): 
@@ -91,6 +91,8 @@ def update(ts, data, network, ax, max_ts):
 
     # Styling
     graph_options = network.config["graph_options"]
+    node_options = network.config["node_options"]
+    label_options = network.config["label_options"]
 
     order_flow_options = network.config["flow_options"]["order"]
     material_flow_options = network.config["flow_options"]["material"]
@@ -104,6 +106,21 @@ def update(ts, data, network, ax, max_ts):
     # Plotting
     ax.set_title(f"Timestep [{ts}] {bankrupt_info} {unconnected_info}")
     nx.draw_networkx(G, layout, node_color=node_colors, labels=node_labels, **graph_options)
+    nx.draw_networkx_labels(
+        G, layout, 
+        labels={
+            network.dummy_raw_material: node_options["raw_material"]["label"]}, 
+        horizontalalignment="left",
+        clip_on=False,
+        **label_options)
+    nx.draw_networkx_labels(
+        G, layout,
+        labels={
+            network.dummy_market: node_options["market"]["label"]},
+        horizontalalignment="right", 
+        clip_on=False,
+        **label_options)
+
 
     # Order flows
     nx.draw_networkx_edges(G, layout, edgelist=list(order_flow.keys()), **order_flow_options)
@@ -167,9 +184,8 @@ def animate():
         paused = not paused
 
     fig.canvas.mpl_connect('button_press_event', toggle_pause)
-
-    # Save animation to a `.gif`
-    # anim.save('sim_animation.gif', writer='imagemagick')
+    
+    # Save to .mp4
     writer = animation.FFMpegWriter(fps=2)
     anim.save("sim_animation.mp4", writer=writer, dpi=100)
 
