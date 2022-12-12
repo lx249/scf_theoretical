@@ -21,8 +21,9 @@ invoice_annual_rate: 1.07
 # Lifespan of a sold invoce
 invoice_term: 60
 
-# Moving average window width
-window_size: 60 
+# Financing threshold calculation 
+moving_average: 
+  window_size: 60 
 
 # Demands generation
 demand_generator: normal

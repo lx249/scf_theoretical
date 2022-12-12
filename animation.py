@@ -1,4 +1,5 @@
 # %%
+import time 
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -46,7 +47,7 @@ def get_cash_flow(data):
     cash_flow = {}
     for _, row in rows_w_order.iterrows():
         sender, receiver = row["cash_from"], row["node_idx"]
-        cash_flow[(sender, receiver)] = row["pay_amount"]
+        cash_flow[(sender, receiver)] = int(row["pay_amount"])
     return cash_flow
 
 
@@ -106,6 +107,7 @@ def update(ts, data, network, ax, max_ts):
     # Plotting
     ax.set_title(f"Timestep [{ts}] {bankrupt_info} {unconnected_info}")
     nx.draw_networkx(G, layout, node_color=node_colors, labels=node_labels, **graph_options)
+    # Properly align dummy node labels
     nx.draw_networkx_labels(
         G, layout, 
         labels={
@@ -130,6 +132,7 @@ def update(ts, data, network, ax, max_ts):
     nx.draw_networkx_edges(G, layout, edgelist=list(material_flow.keys()), **material_flow_options)
     nx.draw_networkx_edge_labels(G, layout, edge_labels=material_flow, **material_flow_label_options)
 
+    # Order flows
     nx.draw_networkx_edges(G, layout, edgelist=list(cash_flow.keys()), **cash_flow_options)
     nx.draw_networkx_edge_labels(G, layout, edge_labels=cash_flow, **cash_flow_label_options)
 

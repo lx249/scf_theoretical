@@ -54,10 +54,12 @@ flow_options:
       alpha: 0.75
     material:
       arrowstyle: simple
+      connectionstyle: arc3,rad=0.2
       alpha: 0.75
       edge_color: red
     cash:
       arrowstyle: simple
+      connectionstyle: arc3,rad=0.2
       edge_color: green
       alpha: 0.75
 
@@ -66,10 +68,27 @@ flow_options:
 flow_label_options:
   order:
     font_color: blue
+    font_size: 9
+    bbox: 
+      boxstyle: round, pad=0
+      ec: [1, 1, 1, 0]
+      fc: [1, 1, 1, 0.5]
   material:
     font_color: red
+    font_size: 9
+    verticalalignment: bottom
+    bbox: 
+      boxstyle: round, pad=0
+      ec: [1, 1, 1, 0]
+      fc: [1, 1, 1, 0.5]
   cash:
     font_color: green
+    font_size: 9
+    verticalalignment: top
+    bbox: 
+      boxstyle: round, pad=0
+      ec: [1, 1, 1, 0]
+      fc: [1, 1, 1, 0.5]
 
 
 

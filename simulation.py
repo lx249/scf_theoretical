@@ -129,8 +129,19 @@ def is_bankrupt(cash_available, total_receiveable, total_payable):
 
 
 # %% Select a financing threshold (ft).
-def select_ft():
-    pass
+def ft_forcast(costs, method="MA"):
+    """
+    Compute the financing threshold using moving cost average.
+
+    Parameters
+    ----------
+    `costs`: list
+        A list of cost at the past timestep
+    `method`: str
+        The name of time series forecasting method.
+    """
+    
+
 
 
 # %% Simulation configurations
@@ -141,7 +152,7 @@ G = network.G
 # Number of nodes
 num_nodes = G.number_of_nodes()
 
-# Simulation configs
+# Simulation configurations
 sim_config = load_config_file("configs/simulation_config.yaml")
 
 t_max = sim_config["t_max"]
