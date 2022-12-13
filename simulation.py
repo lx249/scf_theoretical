@@ -129,7 +129,7 @@ def is_bankrupt(cash_available, total_receiveable, total_payable):
 
 
 # %% Select a financing threshold (ft).
-def ft_forcast(costs, method="MA"):
+def ft_forecast(costs, method="MA"):
     """
     Compute the financing threshold using moving cost average.
 
@@ -140,9 +140,8 @@ def ft_forcast(costs, method="MA"):
     `method`: str
         The name of time series forecasting method.
     """
+    return sum(costs) / len(costs)
     
-
-
 
 # %% Simulation configurations
 # Load the SC network
@@ -161,7 +160,7 @@ loan_repayment_time = sim_config["loan_repayment_time"]
 bank_annual_rate = sim_config["bank_annual_rate"]
 invoice_annual_rate = sim_config["invoice_annual_rate"]
 invoice_term = sim_config["invoice_term"]
-window_size = sim_config["window_size"]
+window_size = sim_config["moving_average"]["window_size"]
 
 # Demand generator by normal distribution
 distributions = sim_config["distributions"]
@@ -187,7 +186,7 @@ max_payment_delay = payment_delay_matrix.max()
 
 """
 Receivable, payable cash, and debts until repayment time
-`receivables`, `payables`, and `debts` are sliding windows 
+`receivables`, `payables`, `debts` and costs are sliding windows 
 that update over the time step.
 Note: `payables` include the debts. 
 `cash_flow` records the cash movement between nodes, keyed by payment timestep.
@@ -195,6 +194,7 @@ Note: `payables` include the debts.
 receivables = np.zeros((num_nodes, max_payment_delay+1))
 payables = np.zeros((num_nodes, max_payment_delay+1)) 
 debts = np.zeros((num_nodes, loan_repayment_time+1))
+costs = np.zeros((num_nodes, window_size))
 cash_flow = {}
 
 
@@ -261,6 +261,7 @@ for t in range(1, t_max + 1):
         payables[buyer][delay] += payout
         receivables[seller][delay] += payout
 
+
         # Record cash flow: moves from `buyer` to `seller` at timestep `k`
         if payout > 0:    
             k = t + delay # Keyed by actual payment timestep
@@ -278,6 +279,7 @@ for t in range(1, t_max + 1):
             5) decrement time to receive and pay
     """
     for node_idx in range(num_nodes):
+
         # Exclude bankrupt nodes
         _bankrupt = G.nodes[node_idx]["is_bankrupt"]
         if not _bankrupt:
@@ -285,6 +287,9 @@ for t in range(1, t_max + 1):
                             - payables[node_idx][0]
                             - operation_fee)
             G.nodes[node_idx]["cash"] += payout_today
+
+            # Record the costs at the timesteps within the given window size
+            costs[node_idx][(t-1) % window_size] = abs(payout_today)
 
         _stock      = np.nan if _bankrupt else G.nodes[node_idx]["stock"]
         _cash       = np.nan if _bankrupt else G.nodes[node_idx]["cash"]
@@ -339,8 +344,7 @@ for t in range(1, t_max + 1):
                 1) moving average; 
                 2) time series forecasting methods.
     """
-    ft = 0
-    # To-Do: using moving average method
+    # To-Do: ft forecast using moving avareage
 
 
     """
@@ -353,6 +357,8 @@ for t in range(1, t_max + 1):
                 5) remove it from the network.
     """
     for node_idx in range(num_nodes):
+        # Financing threshold forecasting using moving average
+        ft = ft_forecast(costs[node_idx], "MA")
         node = G.nodes[node_idx]
         # Omit backrupt nodes
         if node["is_bankrupt"]: 
@@ -407,7 +413,9 @@ for t in range(1, t_max + 1):
                        total_payable):
             # Output: to terminal
             print(f"\n*WARNING*: Node {node_idx} is bankrupt!!!")
-            print(f"Current cash: {cash_reserve}, max debt: {max_debt}, SC loan: {loan}.")
+            print(f"Current cash: {cash_reserve}.")
+            print(f"max debt: {max_debt}.")
+            print(f"SC loan: {loan}.")
             # Output: to file
             output_at_t["is_bankrupt"][node_idx] = True
             G.nodes[node_idx]["is_bankrupt"] = True
