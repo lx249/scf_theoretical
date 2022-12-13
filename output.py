@@ -1,3 +1,9 @@
+"""
+Output settings. 
+Author: Liming Xu
+Email: lx249@cam.ac.uk
+"""
+
 import pandas as pd
 import numpy as np
 

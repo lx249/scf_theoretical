@@ -1,3 +1,9 @@
+"""
+Animate the simulation using `matplotlib.animation` package.
+Author: Liming Xu
+Email: lx249@cam.ac.uk
+"""
+
 # %%
 import networkx as nx
 import numpy as np

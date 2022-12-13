@@ -1,9 +1,3 @@
-"""
-Supply chain financing simulation. 
-Author: Liming Xu
-Email: lx249@cam.ac.uk
-"""
-
 # %%
 import numpy as np
 import pandas as pd
@@ -189,7 +183,6 @@ for i in range(rows):
     for j in range(cols):
         payment_delay_matrix[i, j] = _delay(i + 1, j + 1)
 max_payment_delay = payment_delay_matrix.max()
-
 
 
 """

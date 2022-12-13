@@ -25,6 +25,14 @@ invoice_term: 60
 moving_average: 
   window_size: 60 
 
+# Firm's power (size)
+powers: 
+    - 1 # Small 
+    - 2 # Middle
+    - 3 # Large
+
+
+### Additional simulation parameters
 # Demands generation
 demand_generator: normal
 distributions:
@@ -34,15 +42,5 @@ distributions:
     poisson:
       lambda: 5
 
-
-# Firm's power (size)
-powers: 
-    - 1 # Small 
-    - 2 # Middle
-    - 3 # Large
-
-
-financing_threshold:
-  methods:
     
 

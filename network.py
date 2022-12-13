@@ -1,3 +1,9 @@
+"""
+Create a supply chain network using `networkx` package.
+Author: Liming Xu
+Email: lx249@cam.ac.uk
+"""
+
 # %% 
 import networkx as nx
 import pandas as pd
