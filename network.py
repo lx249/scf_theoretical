@@ -56,28 +56,31 @@ def _calc_tiers(graph, source_node=0):
 # %% Get info about the shape of tiers
 def _shape_of_tiers(tiers):
     values = list(tiers.values())
-    max_tier_width = max([item["width"] for item in values])
+    tier_widths_dummies_excluded = [item["width"] for item in values][1:-1]
     num_of_tiers = len(values)
-    return max_tier_width, num_of_tiers
+    max_tier_width = max(tier_widths_dummies_excluded)
+    min_tier_width  = min(tier_widths_dummies_excluded)
+    return max_tier_width, min_tier_width, num_of_tiers
 
 
 # %% Determine a node' power, i.e., a firm's bargaining power
-def _node_power(homogenity, tier_width, min_tier_width=2):
-    if homogenity:
-        power = 1  # All node gets same bargaining power
+def _node_power(homogeneous, 
+                tier_width, 
+                min_tier_width=2):
+    if homogeneous:
+        power = 1  # All node gets small powers
     else:
-        power = random.uniform(0, 1) * (min_tier_width / tier_width)
-    return int(power // (1 / 3) + 1)
+        x = random.uniform(0, 1) * (min_tier_width / tier_width)
+        power = int(x // (1 / 3) + 1)
+    return power
 
 
 # %% Calculate node position.
 # The entire drawing area is spanning from bottom left (0, 0) (origin point)
 # to top right (1, 1)
 def _tiered_layout(tiers, 
-                   max_tier_width, 
-                   num_tiers, 
-                   padding_x=0.1, 
-                   padding_y=0.1):
+                   max_tier_width, num_tiers, 
+                   padding_x=0.1, padding_y=0.1):
     left_x, right_x = padding_x, 1 - padding_x
     bottom_y, top_y = padding_y, 1 - padding_y
     canvas_width, canvas_length = right_x - left_x, top_y - bottom_y
@@ -102,10 +105,11 @@ def _tiered_layout(tiers,
 # %% Supply chain network
 class SCNetwork(object):
 
-    def __init__(self, config_file):
+    def __init__(self, 
+                 topology, homogeneous, 
+                 powers, market_shares, 
+                 config_file):
         config = _load_config_file(config_file)
-        topology = config["topology"]
-        homogenity = config["homogenity"]
         edges_file = config["edges_file"].format(topology=topology)
         nodes_file  = config["nodes_file"].format(topology=topology)
         edges_df, nodes_df = _get_data(edges_file, nodes_file)
@@ -113,7 +117,7 @@ class SCNetwork(object):
         # Create graph and initialise nodes
         G = _create_graph(edges_df)
         node_depths, tiers = _calc_tiers(G)
-        max_tier_width, num_tiers = _shape_of_tiers(tiers)
+        max_tier_width, min_tier_width, num_tiers = _shape_of_tiers(tiers)
         layout = _tiered_layout(tiers, max_tier_width, num_tiers)
         
 
@@ -121,14 +125,18 @@ class SCNetwork(object):
         for _, row in nodes_df.iterrows():
             node_idx = row["node_idx"]
             tier_no = node_depths[node_idx]
-            power = _node_power(homogenity, tiers[tier_no]["width"], 2)
+            power = _node_power(homogeneous, 
+                                tiers[tier_no]["width"], 
+                                min_tier_width)
+            
             attrs[node_idx] = {
                                 "buy_price": row["buy_price"], 
                                 "sell_price": row["sell_price"],
                                 "cash": row["cash"],
                                 "tier": tier_no,
                                 "power": power,
-                                "max_debt": (power + 1) * row["cash"],
+                                "market_share": market_shares[power-1],
+                                "max_debt": (power+1) * row["cash"],
                               }
         
         nx.set_node_attributes(G, attrs)
