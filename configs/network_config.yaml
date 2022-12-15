@@ -1,18 +1,12 @@
 ---
-# Node homogenity 
-homogenity: False
-
-# Network topoloy
-topology: diamond
-
 # Data files
 edges_file: input_data/{topology}_edges.csv
 nodes_file: input_data/{topology}_nodes.csv
 
-# Network animation condfigurations
+# Network animation condfigs
 figsize: [10, 4]
 
-
+# Animation configs
 graph_options: 
   arrows: True
   arrowstyle: -|>

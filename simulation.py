@@ -17,12 +17,6 @@ def load_config_file(config_file_path, mode="r"):
     return config
 
 
-# %% Calculate node's supply likelihood
-def supply_likelihood(graph, node_idx):
-    power = graph.nodes[node_idx]["power"]
-    return power * random.uniform(0, 1)
-
-
 # %% Supplier selection: select a node with highest likelihood as the supplier
 def select_seller(graph, buyer):
     sellers = list(graph.predecessors(buyer))
@@ -32,8 +26,9 @@ def select_seller(graph, buyer):
     elif num_sellers == 1:
         return sellers[0]
     else:  # >= 1
-        likelihoods = [ supply_likelihood(graph, s) for s in sellers ]
-        return sellers[np.argmax(likelihoods)]
+        market_shares = [ graph.nodes[s]["market_share"] for s in sellers ]
+        selected, = random.choices(sellers, weights=market_shares)
+        return selected
 
 
 # %% Randomly generate positive, integer amount of demands.
@@ -156,7 +151,6 @@ def max_payment_delay(powers):
     -------
         The payment delay matrix two nodes of different powers.
     """
-
     # Anonymous function to calculate payment delay 
     # between a buyer with power p_b and a seller with power p_s
     def _delay(p_b, p_s): return max(30 * (p_b - p_s) + 60, 30)
@@ -181,7 +175,11 @@ class SCFSimulation(object):
     def __init__(self,
                  sim_id,
                  network_config_file, 
+                 network_topology,
+                 homogeneous,
                  t_max, 
+                 financed,
+                 paradigm,
                  operation_fee,
                  loan_repayment_time, 
                  bank_annual_rate,
@@ -189,12 +187,19 @@ class SCFSimulation(object):
                  invoice_term,
                  window_size,
                  powers,
+                 market_shares,
                  demand_generator, 
                  params):
 
         self.sim_id = sim_id
-        self.network = SCNetwork(config_file=network_config_file)
+        self.network = SCNetwork(network_topology, 
+                                 homogeneous, 
+                                 powers,
+                                 market_shares,
+                                 network_config_file)
         self.t_max = t_max
+        self.financed = financed
+        self.paradigm = paradigm
         self.operation_fee = operation_fee
         self.loan_repayment_time = loan_repayment_time
         self.bank_annual_rate = bank_annual_rate
@@ -379,7 +384,14 @@ class SCFSimulation(object):
             """
             for node_idx in range(self.num_nodes):
                 # Financing threshold forecasting using moving average
-                ft = ft_forecast(costs[node_idx], "MA")
+                ft = 0 # Default to `reactive`
+                if self.paradigm == "proactive":
+                    ft_forecast(costs[node_idx], "MA")
+                elif self.paradigm == "reactive":
+                    ft = 0
+                else:
+                    raise ValueError("Paradigm must be either `reactive` or `proactive`.")
+
                 node = self.G.nodes[node_idx]
                 # Omit backrupt nodes
                 if node["is_bankrupt"]:
@@ -392,8 +404,7 @@ class SCFSimulation(object):
                 cash_reserve = node["cash"]
                 debt = node["debt"]
                 max_debt = node["max_debt"]
-                if cash_reserve <= ft:
-                    power = node["power"]
+                if self.financed and cash_reserve <= ft:
                     loan = get_loan("new",
                                     cash=cash_reserve,
                                     max_debt=max_debt,
@@ -409,13 +420,14 @@ class SCFSimulation(object):
                 payables[node_idx][self.loan_repayment_time-1] += loan_repayment
                 self.G.nodes[node_idx]["cash"] += loan
                 self.G.nodes[node_idx]["debt"] += loan_repayment
+
                 # Output
                 output_at_t["cash"][node_idx] = self.G.nodes[node_idx]["cash"]
                 output_at_t["debt"][node_idx] = self.G.nodes[node_idx]["debt"]
                 output_at_t["b_loan"][node_idx] = loan
 
                 # If cash is still not sufficient (<=0), then seek supply chain financing
-                if self.G.nodes[node_idx]["cash"] <= 0:
+                if self.financed and self.G.nodes[node_idx]["cash"] <= 0:
                     deficit = abs(self.G.nodes[node_idx]["cash"])
                     receive_early = min(receivables[node_idx][self.invoice_term], deficit)
                     discount = interest_to_pay(receive_early,
@@ -423,17 +435,18 @@ class SCFSimulation(object):
                                                self.invoice_term)
                     self.G.nodes[node_idx]["cash"] += (receive_early - discount)
                     receivables[node_idx][self.invoice_term] -= receive_early
+                
                 # Update loan cap
                 self.G.nodes[node_idx]["max_debt"] = get_max_debt(self.G.nodes[node_idx]["cash"],
-                                                            self.G.nodes[node_idx]["power"])
+                                                                  self.G.nodes[node_idx]["power"])
                 total_receiveable = np.sum(receivables[node_idx, :])
                 total_payable = np.sum(payables[node_idx, :])
                 total_debt = np.sum(debts[node_idx, :])
                 # Check if the node is bankrupt.
                 # If so, remove its both in and out edges from the network
                 if is_bankrupt(self.G.nodes[node_idx]["cash"],
-                            total_receiveable,
-                            total_payable):
+                               total_receiveable,
+                               total_payable):
                     # Output: to terminal
                     print(f"\n*WARNING*: Node {node_idx} is bankrupt!!!")
                     print(f"Current cash: {cash_reserve}.")

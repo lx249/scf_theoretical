@@ -67,6 +67,8 @@ def _shape_of_tiers(tiers):
 def _node_power(homogeneous, 
                 tier_width, 
                 min_tier_width=2):
+    if tier_width < min_tier_width:
+        raise ValueError("`tier_width` must not be less than `min_tier_width`.")
     if homogeneous:
         power = 1  # All node gets small powers
     else:
@@ -119,43 +121,17 @@ class SCNetwork(object):
         node_depths, tiers = _calc_tiers(G)
         max_tier_width, min_tier_width, num_tiers = _shape_of_tiers(tiers)
         layout = _tiered_layout(tiers, max_tier_width, num_tiers)
+
+        dummy_raw_material = 0  # Dummy raw material node has infinite stock
+        dummy_market = G.number_of_nodes() - 1  # Dummy market has infinite cash
         
-
-        attrs = {}  
-        for _, row in nodes_df.iterrows():
-            node_idx = row["node_idx"]
-            tier_no = node_depths[node_idx]
-            power = _node_power(homogeneous, 
-                                tiers[tier_no]["width"], 
-                                min_tier_width)
-            
-            attrs[node_idx] = {
-                                "buy_price": row["buy_price"], 
-                                "sell_price": row["sell_price"],
-                                "cash": row["cash"],
-                                "tier": tier_no,
-                                "power": power,
-                                "market_share": market_shares[power-1],
-                                "max_debt": (power+1) * row["cash"],
-                              }
-        
-        nx.set_node_attributes(G, attrs)
-        nx.set_node_attributes(G, 0, "stock") 
-        nx.set_node_attributes(G, 0, "unfilled")
-        nx.set_node_attributes(G, 0, "issued")
-        nx.set_node_attributes(G, 0, "debt")
-        nx.set_node_attributes(G, False, "is_bankrupt")
-
-        dummy_raw_material = 0 # Dummy raw material node has infinite stock
-        dummy_market = 19  # Dummy market has infinite cash
-        nx.set_node_attributes(G, {dummy_market: {"cash": sys.maxsize, "power": -1}})
-        nx.set_node_attributes(G, {dummy_raw_material: {"stock": sys.maxsize, "power": -1}})
-
         # Initialisation
         self.G = G
+        self.config = config
+        self.powers = powers
+        self.market_shares = market_shares
         self.dummy_raw_material = dummy_raw_material
         self.dummy_market = dummy_market
-        self.config = config
         self.node_depths = node_depths
         self.tiers = tiers
         self.num_tiers = num_tiers
@@ -164,9 +140,55 @@ class SCNetwork(object):
         self.node_colors = self._get_node_colors(config["node_options"])
         self.node_labels = self._get_node_labels(config["node_options"])
 
-    # %% Get the node labels
+        attrs = {}
+        for _, row in nodes_df.iterrows():
+            node_idx = row["node_idx"]
+            tier_no = node_depths[node_idx]
+            if self.is_dummy(node_idx):
+                power = -1
+                market_share = -1
+            else:
+                power = _node_power(homogeneous,
+                                    tiers[tier_no]["width"],
+                                    min_tier_width)
+                market_share = market_shares[powers.index(power)]
+
+            attrs[node_idx] = {
+                "buy_price": row["buy_price"],
+                "sell_price": row["sell_price"],
+                "cash": row["cash"],
+                "tier": tier_no,
+                "power": power,
+                "market_share": market_share,
+                "max_debt": (power+1) * row["cash"],
+            }
+
+        nx.set_node_attributes(G, attrs)
+        nx.set_node_attributes(G, 0, "stock")
+        nx.set_node_attributes(G, 0, "unfilled")
+        nx.set_node_attributes(G, 0, "issued")
+        nx.set_node_attributes(G, 0, "debt")
+        nx.set_node_attributes(G, False, "is_bankrupt")
+
+        nx.set_node_attributes(G, {dummy_market: {"cash": sys.maxsize}})
+        nx.set_node_attributes(G, {dummy_raw_material: {"stock": sys.maxsize}})
 
 
+    # %% Check if the node is dummy
+    def is_dummy(self, node):
+        if node == self.dummy_market or node == self.dummy_raw_material:
+            return True
+        else: 
+            return False
+    
+
+    # %% Get the market share of the given power.
+    def _get_market_share(self, power):
+        if power not in self.powers:
+            raise ValueError(f"The value of `power` must be {self.powers}.")
+        return self.market_shares[self.powers.index(power)]
+
+    # %% 
     def _get_node_labels(self, node_options):
         labels = {}
         for node_idx in range(self.G.number_of_nodes()):
