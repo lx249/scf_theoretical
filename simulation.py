@@ -1,3 +1,9 @@
+"""
+Main file for simulation process.
+Author: Liming Xu
+Email: lx249@cam.ac.uk
+"""
+
 # %%
 import numpy as np
 import pandas as pd
@@ -5,16 +11,9 @@ import networkx as nx
 import yaml
 import random
 
-# Self-defined packages
+# Self-defined modules
 from network import SCNetwork
 from output import columns, Writer
-
-
-# %% Load config parameters
-def load_config_file(config_file_path, mode="r"):
-    with open(config_file_path, mode) as file:
-        config = yaml.safe_load(file)
-    return config
 
 
 # %% Supplier selection: select a node with highest likelihood as the supplier
@@ -164,53 +163,41 @@ def max_payment_delay(powers):
     return payment_delay_matrix
     
 
-# Define a writer for storing runtime data.
-writer = Writer(sim_id=0)
-
-
 class SCFSimulation(object):
     """
     """
 
     def __init__(self,
                  sim_id,
-                 network_config_file, 
-                 network_topology,
+                 topology, 
                  homogeneous,
-                 t_max, 
-                 financed,
-                 paradigm,
-                 operation_fee,
-                 loan_repayment_time, 
-                 bank_annual_rate,
-                 invoice_annual_rate,
-                 invoice_term,
-                 window_size,
-                 powers,
-                 market_shares,
-                 demand_generator, 
-                 params):
+                 network_config, 
+                 **input_params):
 
-        self.sim_id = sim_id
-        self.network = SCNetwork(network_topology, 
-                                 homogeneous, 
-                                 powers,
-                                 market_shares,
-                                 network_config_file)
-        self.t_max = t_max
-        self.financed = financed
-        self.paradigm = paradigm
-        self.operation_fee = operation_fee
-        self.loan_repayment_time = loan_repayment_time
-        self.bank_annual_rate = bank_annual_rate
-        self.invoice_annual_rate = invoice_annual_rate
-        self.invoice_term = invoice_term
-        self.window_size = window_size
-        self.powers = powers
-        self.demand_generator = demand_generator
-        self.params = params
+        self.sim_id = sim_id  
+        # Define a writer for storing runtime data.
+        self.writer = Writer(sim_id)
 
-        self.payment_delay_matrix = max_payment_delay(powers)
+        self.network = SCNetwork(topology, 
+                                 homogeneous,
+                                 input_params["powers"],
+                                 input_params["market_shares"],
+                                 network_config)
+
+        self.t_max               = input_params["t_max"]
+        self.financed            = input_params["financed"]
+        self.paradigm            = input_params["paradigm"]
+        self.operation_fee       = input_params["operation_fee"]
+        self.loan_repayment_time = input_params["loan_repayment_time"]
+        self.bank_annual_rate    = input_params["bank_annual_rate"]
+        self.invoice_annual_rate = input_params["invoice_annual_rate"]
+        self.invoice_term        = input_params["invoice_term"]
+        self.window_size         = input_params["window_size"]
+        self.powers              = input_params["powers"]
+        self.demand_distribution = input_params["demand_distribution"]
+        self.distribution_params = input_params["distribution_params"]
+
+        self.payment_delay_matrix = max_payment_delay(input_params["powers"])
         self.max_payment_delay = self.payment_delay_matrix.max()
         self.G = self.network.G
         self.num_nodes = self.G.number_of_nodes()
@@ -243,7 +230,8 @@ class SCFSimulation(object):
         total_demands = 0
 
         for t in range(1, self.t_max + 1):
-            demand = get_demand(self.demand_generator, **self.params)
+            demand = get_demand(self.demand_distribution,
+                                **self.distribution_params)
             total_demands += demand
             print("_"*30)
             print(f"[{t:<8}], demand: {demand}, total_demand: {total_demands}")
@@ -499,7 +487,7 @@ class SCFSimulation(object):
             new_orders = replenish_orders
 
             # Write to file
-            writer.append(output_at_t)
+            self.writer.append(output_at_t)
 
             # Check if the graph is still connected, i.e., if there is
             # a path from dummy market to dummy raw material.
@@ -509,7 +497,7 @@ class SCFSimulation(object):
                                self.network.dummy_market):
                 print("\nNo path from dummy raw material to market!")
                 print("Network is unconnected, simulation ends.")
-                writer.write()
+                self.writer.write()
                 break
                 
 

@@ -6,14 +6,13 @@ Email: lx249@cam.ac.uk
 
 # %%
 import networkx as nx
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.lines import Line2D
-from matplotlib.patches import FancyArrowPatch
 
 from network import SCNetwork
+from utils import load_config_file
 
 
 def get_data_at_t(data, timestep):
@@ -159,14 +158,21 @@ def update(ts, data, network, ax, max_ts):
               ncol=3)
 
 
-def animate():
-    # Data preparation
-    data_file = "output_data/output__sim_0.csv"
+def animate(data_file):
+    
     data = pd.read_csv(data_file)
 
     max_ts = data.timestep.max()
 
-    network = SCNetwork(config_file="configs/network_config.yaml")
+    network_config = load_config_file("configs/network_config.yaml")
+    sim_config = load_config_file("configs/simulation_config.yaml")
+    network = SCNetwork(
+        sim_config["network_topology"],
+        sim_config["homogeneous"],
+        sim_config["powers"], 
+        sim_config["market_shares"],
+        config=network_config)
+
     fig, ax = network.draw()
 
     # Remove frames
@@ -202,5 +208,6 @@ def animate():
 
 %matplotlib ipympl
 if __name__ == "__main__":
-
-    animate()
+    # Data preparation
+    data_file = "output_data/output__sim_0.csv"
+    animate(data_file)

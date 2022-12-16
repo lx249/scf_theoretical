@@ -1,41 +1,76 @@
 ---
-# Simulation unique ID
-sim_id: 0
-
 # Network topoloy
-network_topology: lattice
+network_topology: 
+  - lattice
+  - dimond
 
 # Node homogenity 
-homogeneous: True
+homogeneous: 
+  - True
+  - False
 
 # Max time steps -- total number of iterations
 t_max: 1000
 
 # Whether or not financing is enabled.
-financed: True # Having both bank and SC financing 
+financed: 
+  - True
+  - False
 
 # Dynamic or zero financing threshold
-paradigm: proactive
+paradigm: 
+  - reactive
+  - proactive
 
 # Operation fee for each timestep
-operation_fee: 1
+operation_fee: 
+  - 5
+  - 10
+  - 15
 
 # The time to repay loan
 # WARNING: must equal to max_payment_delay
 loan_repayment_time: 120 
 
 # Annualised bank loan interest rate 
-bank_annual_rate: 1.03
+bank_annual_rate: 
+  - 1.01
+  - 1.03
+  - 1.05
+  - 1.07
+  - 1.09
+  - 1.20
+  - 1.50
+  - 2.0
+
 
 # Annualised invoice interest rate
-invoice_annual_rate: 1.07 
+invoice_annual_rate: 
+  - 1.01
+  - 1.03
+  - 1.05
+  - 1.07
+  - 1.09
+  - 1.20
+  - 1.50
+  - 2.0 
 
 # Lifespan of a sold invoce
-invoice_term: 60
+invoice_term: 
+  - 5
+  - 30
+  - 60
+  - 90
+  - 120
 
 # Financing threshold calculation 
 moving_average: 
-  window_size: 60 
+  window_size: 
+    - 5
+    - 30
+    - 60
+    - 90
+    - 120 
 
 # Firm's power (size)
 # Represented them as 1, 2, 3 for computation conveinence
@@ -46,19 +81,32 @@ powers:
 
 # Firm power market shares
 market_shares: 
-  - 1
-  - 3
-  - 5
+  medium: 
+    - 1
+    - 2
+    - 5
+  large: 
+    - 1
+    - 3
+    - 10
+    - 20
+
 
 ### Additional simulation parameters
 # Demands generation
-demand_distribution: normal
+demand_distribution: 
+  - normal
+
 distribution_params:
     normal:
-      mean: 50
-      sigma: 10
+      mean: 
+        - 5
+        - 20
+        - 50
+        - 100
+      sigma: 
+        - 5
+        - 10
+        - 15
     poisson:
       lambda: 5
-
-    
-

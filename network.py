@@ -10,15 +10,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-import yaml
 import sys
 
-
-# %% Load graph config parameters
-def _load_config_file(config_file_path, mode="r"):
-    with open(config_file_path, mode) as file:
-        config = yaml.safe_load(file)
-    return config
+# Self-defined module
+from utils import load_config_file
 
 
 # %% Get data
@@ -110,8 +105,7 @@ class SCNetwork(object):
     def __init__(self, 
                  topology, homogeneous, 
                  powers, market_shares, 
-                 config_file):
-        config = _load_config_file(config_file)
+                 config):
         edges_file = config["edges_file"].format(topology=topology)
         nodes_file  = config["nodes_file"].format(topology=topology)
         edges_df, nodes_df = _get_data(edges_file, nodes_file)
