@@ -36,7 +36,7 @@ def get_demand(distribution, **params):
     # Normal demand generator
     def normal(mean, sigma):
         d = int(np.random.normal(mean, sigma))
-        return (d if d > 0 else get_demand(mean, sigma))
+        return (d if d > 0 else normal(mean, sigma))
 
     # Poisson demand generator
     def poisson(lambda_value):
@@ -164,9 +164,6 @@ def max_payment_delay(powers):
     
 
 class SCFSimulation(object):
-    """
-    """
-
     def __init__(self,
                  sim_id,
                  topology, 
@@ -188,7 +185,7 @@ class SCFSimulation(object):
         self.financed            = input_params["financed"]
         self.paradigm            = input_params["paradigm"]
         self.operation_fee       = input_params["operation_fee"]
-        self.loan_repayment_time = input_params["loan_repayment_time"]
+        self.loan_repayment_time = int(input_params["loan_repayment_time"])
         self.bank_annual_rate    = input_params["bank_annual_rate"]
         self.invoice_annual_rate = input_params["invoice_annual_rate"]
         self.invoice_term        = input_params["invoice_term"]

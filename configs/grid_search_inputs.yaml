@@ -28,9 +28,9 @@ operation_fee:
   - 10
   - 15
 
-# The time to repay loan
-# WARNING: must equal to max_payment_delay
-loan_repayment_time: 120 
+# Financing related parameters:
+loan_repayment_time: 
+  - 120 
 
 # Annualised bank loan interest rate 
 bank_annual_rate: 
