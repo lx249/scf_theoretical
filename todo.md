@@ -71,3 +71,7 @@ a) Calculating the cash to cash cycle
 - Current cash-to-cash cycle variable = sale_price_per_unit \*<stock_over_time_t> / ( sum(purchase_costs_over_time_t) + operational_fee\*t ) * t + <accounts_payable_over_time_t> / sum(sale_values_over_time_t) * t - sum(accounts_payable_over_time_t) / ( sum(purchase_costs_over_time_t) + operational_fee\*t ) * t
 - <x> means mean of the set x
 - I believe the first two terms can be simplified into sums (rather than means) not multiplied by the number of timesteps investigated but whatever
+  
+  
+## Future plan
+### Local visibility
