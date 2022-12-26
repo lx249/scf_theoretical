@@ -66,12 +66,42 @@ c)
 d)
 - n boxplots per cell for given combos of inputs
 
-B) Next paper analysis
+
+  
+## Future plan
+### 
+- n-hop region
+- nodes share financing threshold to focal node of subregion
+- node optimises
+
 a) Calculating the cash to cash cycle
 - Current cash-to-cash cycle variable = sale_price_per_unit \*<stock_over_time_t> / ( sum(purchase_costs_over_time_t) + operational_fee\*t ) * t + <accounts_payable_over_time_t> / sum(sale_values_over_time_t) * t - sum(accounts_payable_over_time_t) / ( sum(purchase_costs_over_time_t) + operational_fee\*t ) * t
 - <x> means mean of the set x
 - I believe the first two terms can be simplified into sums (rather than means) not multiplied by the number of timesteps investigated but whatever
+    
+a') May be worth investigating comparison of cash-to-cash-cycle minimisation survivability vs recievables to payables time series difference minimisation survivability
+    
+b) Local visibility
+  - n-hop region
+  - nodes share financing threshold to subregion focal node
+  - focal nodes then use information to redefine their own financing threshold
   
+c) 2 step cash2cash optimisation cycle for focal node n
+  - notation
+  - - let ft(t, n) = financing threshold that time t of node n
+  - - D = gradient function
+  - - n_i = node i
+  - - L = local region
+  - c2c(t,n) = f({ft(n,t)_[n in L]})
+ 
+c1) Optimise ft(t,n)
+  - c2c(t',n) = f( {ft(n_i,t)_[n in {L\n}], argmin_[ft](ft(n,t)Dft(n,t'))} )
+  - basically, adjust ft(n,t) in a way that maximally reduces c2c assuming c2c can be defined in terms of f
   
-## Future plan
-### Local visibility
+c2) Optimise D
+  - c2c(t+1,n) = argmin_[f](f( {ft(n_i,t)_[n in {L\n}], ft(n,t')} )Df
+  - basically, adjust f in a way that maximally reduces c2c assuming it can be defined in terms of f
+  
+d) Options for f
+  - linear combination of financing thresholds of each member with weights
+  - vitality function that measures difference between some weighted graph connectivity measure and same measure on graph without focal node (probably comparing impact of vitality and not is its own study)
