@@ -105,3 +105,4 @@ c2) Optimise D
 d) Options for f
   - linear combination of financing thresholds of each member with weights
   - vitality function that measures difference between some weighted graph connectivity measure and same measure on graph without focal node (probably comparing impact of vitality and not is its own study)
+  - some third, secret thing
