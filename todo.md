@@ -102,8 +102,22 @@ c2) Optimise D
   - c2c(t+1,n) = argmin_[f](f( {ft(n_i,t)_[n in {L\n}], ft(n,t')} )Df
   - basically, adjust f in a way that maximally reduces c2c assuming it can be defined in terms of f
   
-d) Options for f
+c3) Options for f
   - linear combination of financing thresholds of each member with weights
   - - eg, f({ft(n,t)_[n in L]}) = sum_[i in L]( g_i^(t) ft(n,t) )
   - vitality function that measures difference between some weighted graph connectivity measure and same measure on graph without focal node (probably comparing impact of vitality versus not is its own study)
   - softmax, or something, whatever that function might be
+  
+d1) Proposed steady state parameterisation (for material functions, not financial ones, I don't know if those even have meaningful steady state parameters)
+  - If operative costs per timestep equal expected profits per timestep, then in this parameter configuration we, up to approximation, can say with confidence that all failures are due to variation and not magnitude of market behaviour
+  - o = operating_fee; m = mean_demand; N = nodes_in_network; M_n = nodes_in_path_upstream_of_n_inclusive; r_m = relative_market_share_of_node_m
+  - Option a: o = m * sum_[n in N](product_[m in M_n](r_m)) / |N|
+  - - that is if we wish to give everyone the same operating fee
+  - denoting o_n = operative_fee_of_n
+  - Option b: o_n = m * product_[m in M_n](r_m)
+  - - that is if we wish to give everyone unique operative fees (no mean field assumption)
+  - Option c: Whatever Liming suggests for empirically derived steady state parameterisation manifold
+  
+d2) Operative fee scale parameter
+  - I propose that we introduce a scale parameter, s,  for operative fee if we use this equilibrium state to be able to conduct easy sensitivity analysis
+  - Default s = 1, st real_operative_fee = s*o or s*o_n
