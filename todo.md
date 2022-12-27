@@ -90,13 +90,13 @@ c) 2 step cash2cash optimisation cycle for focal node n
   - notation
   - - let $ft(t, n)$ = financing threshold that time t of node n
   - - D = gradient function
-  - - n_i = node i
-  - - L = local region
-  - c2c(t,n) = f({ft(n,t)_[n in L]})
+  - - $n_i$ = node $i$
+  - - $L$ = local region
+  - $c2c(t,n) = f({ft(n,t)_[n in L]})$
  
 c1) Optimise ft(t,n)
-  - c2c(t',n) = f( {ft(n_i,t)_[n in {L\n}], argmin_[ft](ft(n,t)Dft(n,t'))} )
-  - basically, adjust ft(n,t) in a way that maximally reduces c2c assuming c2c can be defined in terms of f
+  - $c2c(t',n) = f( {ft(n_i,t)_[n in {L\n}], argmin_[ft](ft(n,t)Dft(n,t'))} )$
+  - basically, adjust $ft(n,t)$ in a way that maximally reduces c2c assuming c2c can be defined in terms of f
   
 c2) Optimise D
   - c2c(t+1,n) = argmin_[f](f( {ft(n_i,t)_[n in {L\n}], ft(n,t')} )Df
