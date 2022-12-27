@@ -88,7 +88,7 @@ b) Local visibility
   
 c) 2 step cash2cash optimisation cycle for focal node n
   - notation
-  - - let ft(t, n) = financing threshold that time t of node n
+  - - let $ft(t, n)$ = financing threshold that time t of node n
   - - D = gradient function
   - - n_i = node i
   - - L = local region
