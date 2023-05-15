@@ -163,7 +163,12 @@ def max_payment_delay(powers):
     return payment_delay_matrix
     
 
+
 class SCFSimulation(object):
+    """
+    Class for defining a simulation instance.
+    """
+    
     def __init__(self,
                  sim_id,
                  topology, 
