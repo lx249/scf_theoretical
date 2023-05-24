@@ -98,7 +98,6 @@ def _tiered_layout(tiers,
     return layout
 
 
-
 # %% Supply chain network
 class SCNetwork(object):
 

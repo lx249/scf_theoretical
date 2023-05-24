@@ -16,7 +16,7 @@ from network import SCNetwork
 from output import columns, Writer
 
 
-# %% Supplier selection: select a node with highest likelihood as the supplier
+# %% Supplier selection: select a node with   as the supplier
 def select_seller(graph, buyer):
     sellers = list(graph.predecessors(buyer))
     num_sellers = len(sellers)
