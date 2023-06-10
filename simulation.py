@@ -16,7 +16,7 @@ from network import SCNetwork
 from output import columns, Writer
 
 
-# %% Supplier selection: select a node with   as the supplier
+# %% Supplier selection: select a node with as the supplier
 def select_seller(graph, buyer):
     sellers = list(graph.predecessors(buyer))
     num_sellers = len(sellers)
@@ -160,8 +160,7 @@ def max_payment_delay(powers):
     for i in range(rows):
         for j in range(cols):
             payment_delay_matrix[i, j] = _delay(i + 1, j + 1)
-    return payment_delay_matrix
-    
+    return payment_delay_matrix    
 
 
 class SCFSimulation(object):
@@ -225,8 +224,8 @@ class SCFSimulation(object):
         """
         A dictionary for storing new orders at the current timestep.
         Its item {(buyer, seller): (buy_amount, receive_amount, replenish_required)} 
-        indicates: a `buyer` buy `buy_amount` from `seller`, 
-        received `receive_amount` require replenish or not.
+        indicates: a `buyer` buys `buy_amount` from `seller`, 
+        and receives `receive_amount` and requires replenish or not.
         """
         new_orders = {}
         total_demands = 0

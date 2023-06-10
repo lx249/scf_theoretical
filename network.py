@@ -215,10 +215,3 @@ class SCNetwork(object):
         graph_options = self.config["graph_options"]
         fig, ax = self._draw_graph(self.config["figsize"], **graph_options)
         return fig, ax
-
-
-
-
-
-    
-    
