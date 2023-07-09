@@ -39,12 +39,13 @@ moving_average:
 
 # Firm's power (size)
 # Represented them as 1, 2, 3 for computation conveinence
+# For seeking financing or repayment
 powers: 
   - 1 # Small 
   - 2 # Middle
   - 3 # Large
 
-# Firm power market shares
+# For selecting sellers (suppliers)
 market_shares: 
   - 1
   - 3

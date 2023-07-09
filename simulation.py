@@ -8,7 +8,6 @@ Email: lx249@cam.ac.uk
 import numpy as np
 import pandas as pd
 import networkx as nx
-import yaml
 import random
 
 # Self-defined modules
